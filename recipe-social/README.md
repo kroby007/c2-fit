@@ -57,6 +57,14 @@ export GEMINI_API_KEY=...               # food photography
 python -m src.cli run --no-publish
 ```
 
+On **Windows**, use PowerShell and set the keys with `$env:ANTHROPIC_API_KEY =
+"sk-ant-..."` — `export` is shell-specific. You need Chrome installed; the
+renderer finds it at the standard install paths without any PATH setup.
+
+Or skip local setup entirely: run the **Daily recipe post** workflow from the
+Actions tab with `no_publish` ticked, and download the slides from the run's
+artifacts.
+
 That writes `out/<today>/` containing `slide1.png`, `slide2.png`, `slide3.png`,
 and `caption.txt`. Airdrop them to your phone and post by hand. Everything from
 here is about removing that manual step.
@@ -298,7 +306,14 @@ workflows install `fonts-noto-color-emoji`; locally, install it the same way.
 very long title with a ten-ingredient list can still crowd. Shorten the title in
 `out/<date>/post.json` and re-run `render`.
 
-**`No Chromium/Chrome binary found`** — set `CHROME_BINARY` to its path.
+**`No Chromium/Chrome binary found`** — set `CHROME_BINARY` to its path. On
+Windows the standard Chrome and Edge install locations are searched already, so
+this usually means Chrome is somewhere non-standard:
+`$env:CHROME_BINARY = "C:\path\to\chrome.exe"`.
+
+**`'export' is not recognized`** (Windows) — that's bash syntax. In PowerShell
+use `$env:NAME = "value"`. Note `set NAME=value` works only in `cmd.exe` and will
+silently do nothing useful in PowerShell.
 
 **Publishing 404s on the images** — Pages hadn't rebuilt yet. The `wait` stage
 exists for this; if it times out, confirm Pages is building from `/docs`.

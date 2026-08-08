@@ -50,15 +50,46 @@ Together: **under ~$2/month** at one post a day.
 
 ## 4. Make your first post by hand
 
-You can do this right now — no TikTok approval needed.
+You can do this right now — no TikTok approval needed. Two ways; pick one.
+
+### Easiest: run it on GitHub, install nothing
+
+Actions tab → **Daily recipe post** → **Run workflow** → tick **`no_publish`** →
+green button. It builds everything on GitHub's machine and stops before
+publishing. When it finishes, open the run and download the **`post-<id>`**
+artifact from the Summary page — a zip with your three slides and the caption.
+
+This needs nothing on your computer, and it's the same machine the daily job
+uses, so what you see is what will post.
+
+### Or run it locally
+
+Needs **Python 3.10+** ([python.org](https://www.python.org/downloads/) — tick
+*Add python.exe to PATH* in the installer) and **Google Chrome**.
+
+**Windows (PowerShell)** — right-click the Start button → *Terminal*:
+
+```powershell
+cd path\to\c2-fit\recipe-social
+pip install -r requirements.txt
+$env:ANTHROPIC_API_KEY = "sk-ant-..."
+$env:GEMINI_API_KEY = "..."
+python -m src.cli run --no-publish
+```
+
+**macOS / Linux:**
 
 ```bash
-cd recipe-social
+cd path/to/c2-fit/recipe-social
 pip install -r requirements.txt
 export ANTHROPIC_API_KEY=sk-ant-...
 export GEMINI_API_KEY=...
 python -m src.cli run --no-publish
 ```
+
+`$env:NAME = "..."` is PowerShell's `export`, and it lasts only for that window —
+reopen the terminal and you set them again. Don't use `set NAME=...`; that's the
+old `cmd.exe` syntax and won't apply in PowerShell.
 
 Slides and caption land in `out/<today>/`. Post them manually.
 

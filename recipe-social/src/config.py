@@ -41,6 +41,10 @@ def hashtags() -> dict:
 # Ordered by how likely each is to be the real binary in a given environment:
 # the dev container ships Playwright's Chromium, Actions runners ship Chrome,
 # and a developer machine usually has one of the distro names on PATH.
+#
+# The Windows entries matter more than they look: Chrome's installer does not
+# put chrome.exe on PATH, so the shutil.which() fallback below never finds it
+# and these absolute paths are the only thing that does.
 _CHROME_CANDIDATES = (
     "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
     "/opt/pw-browsers/chromium/chrome-linux/chrome",
@@ -48,6 +52,11 @@ _CHROME_CANDIDATES = (
     "/usr/bin/chromium-browser",
     "/usr/bin/chromium",
     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+    r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+    os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe"),
+    r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+    r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
 )
 
 

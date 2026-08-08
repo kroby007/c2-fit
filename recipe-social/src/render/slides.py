@@ -217,7 +217,9 @@ def render_slides(recipe: Recipe, hero_image: bytes, out_dir: pathlib.Path) -> l
                     f"--window-size={canvas['width']},{canvas['height']}",
                     # Give fonts and the inlined image a moment to settle before capture.
                     "--virtual-time-budget=3000",
-                    f"--screenshot={png_path}", f"file://{html_path}",
+                    # as_uri() rather than an f-string: a Windows path is
+                    # C:\...\x.html, and "file://C:\..." is not a URL Chrome loads.
+                    f"--screenshot={png_path}", pathlib.Path(html_path).as_uri(),
                 ],
                 capture_output=True, text=True, timeout=120,
             )
