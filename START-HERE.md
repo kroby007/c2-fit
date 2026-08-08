@@ -4,9 +4,12 @@ Everything is built and tested. These are the steps only you can do.
 
 Full detail for any step is in [`recipe-social/README.md`](recipe-social/README.md).
 
-**Steps 1–4 are entirely in your hands and get you posting by hand today.**
-Steps 5–6 are the long pole — TikTok scope approval takes real time and is the
-most likely place to get stuck.
+**Steps 1–5 are the whole system.** They need no TikTok developer account, no
+app review, and no approval from anyone — at the end of them a new post is built
+for you every morning and posting it takes about a minute on your phone.
+
+Steps 6–11 are optional and can wait indefinitely. All they buy is skipping the
+image-saving step.
 
 > **This repo must stay public.** TikTok fetches every carousel image over plain
 > HTTPS with no credentials, so the Pages site has to be anonymously readable.
@@ -35,7 +38,7 @@ Settings → Secrets and variables → Actions → **Variables** tab → New var
 | `PAGES_BASE_URL` | `https://kroby007.github.io/c2-fit` |
 
 **No trailing slash.** This must end up byte-identical to the URL prefix you
-verify with TikTok in step 6.
+verify with TikTok in step 7.
 
 ## 3. Add the two generation keys
 
@@ -54,13 +57,16 @@ You can do this right now — no TikTok approval needed. Two ways; pick one.
 
 ### Easiest: run it on GitHub, install nothing
 
-Actions tab → **Daily recipe post** → **Run workflow** → tick **`no_publish`** →
-green button. It builds everything on GitHub's machine and stops before
-publishing. When it finishes, open the run and download the **`post-<id>`**
-artifact from the Summary page — a zip with your three slides and the caption.
+Actions tab → **Daily recipe post** → **Run workflow** → tick **`manual`** →
+green button.
 
-This needs nothing on your computer, and it's the same machine the daily job
-uses, so what you see is what will post.
+It builds everything on GitHub's machine, publishes the slides to your own site,
+and stops. The run's Summary page then links you to
+`https://kroby007.github.io/c2-fit/today.html` — open that on your phone and
+post from it.
+
+This needs nothing installed, and it's the same machine the daily job uses, so
+what you see is what will post.
 
 ### Or run it locally
 
@@ -97,9 +103,43 @@ This is also your first real look at the AI food photography. **If it doesn't
 look appetizing, say so** — swapping to a better image model is a one-line config
 change, and it's much cheaper to find out now than after 30 posts.
 
+## 5. Turn on manual mode — and you're done for now
+
+Settings → Secrets and variables → Actions → **Variables** → New variable:
+
+| Name | Value |
+|---|---|
+| `MANUAL_MODE` | `true` |
+
+Now the daily job does everything except the final API call: it writes the
+recipe, generates the photo, renders the slides, runs the quality gate, and
+publishes them to a page on your own site.
+
+Each morning, open this on your phone:
+
+**`https://kroby007.github.io/c2-fit/today.html`**
+
+Save the three images, tap **Copy caption**, and post. About a minute.
+
+Add it to your home screen — the URL never changes.
+
+The schedule is already live: `daily-post.yml` runs at **15:00 UTC** every day,
+so the page refreshes itself each morning without you doing anything. Nothing
+else to turn on.
+
+**This needs no TikTok developer app at all.** Everything below is optional, and
+only removes the file-saving step: even with full API access, drafts mode still
+means opening TikTok and picking a sound yourself. Run this way for a few weeks
+first. If the daily minute starts to grate, then do the steps below.
+
 ---
 
-## 5. Register the TikTok app
+## Optional, later: the TikTok API
+
+> Skip this entirely unless manual posting is annoying you. It takes days of
+> review to save ~60 seconds a day.
+
+## 6. Register the TikTok app
 
 First, **replace `hello@example.com`** in `docs/privacy.html` and
 `docs/terms.html` with a real address. TikTok's reviewers read those pages.
@@ -114,7 +154,7 @@ Then at <https://developers.tiktok.com>:
   (add `video.publish` only later, when going for the audit)
 - Add a redirect URI of exactly `https://kroby007.github.io/c2-fit/oauth.html`
 
-## 6. Verify your URL prefix
+## 7. Verify your URL prefix
 
 Developer portal → **Manage URL properties** → add your prefix → download the
 verification file → commit it to `docs/` → push → wait for Pages → click Verify.
@@ -126,7 +166,7 @@ publishing fails with `url_ownership_unverified`.
 (It's also why `raw.githubusercontent.com` can't be used — you can't place a
 verification file on a domain you don't own.)
 
-## 7. Mint a refresh token
+## 8. Mint a refresh token
 
 ```bash
 export TIKTOK_CLIENT_KEY=...
@@ -145,7 +185,7 @@ warns and you copy the token over by hand.
 
 ---
 
-## 8. Check everything
+## 9. Check everything
 
 ```bash
 python -m src.cli doctor
@@ -162,7 +202,7 @@ Then run the **Preflight (check setup)** workflow from the Actions tab. That
 checks your *Actions secrets*, which is where they actually live — `doctor` on
 your laptop only proves your laptop works.
 
-## 9. First live post
+## 10. First live post
 
 ```bash
 python -m src.cli run
@@ -174,7 +214,7 @@ order and the caption intact. Add a trending sound and post.
 > Picking the sound yourself is the whole reason for drafts mode: no API accepts
 > a sound ID, so this is the only way to control the song.
 
-## 10. Turn on the schedule
+## 11. Turn on the schedule
 
 `.github/workflows/daily-post.yml` already runs at 15:00 UTC daily.
 

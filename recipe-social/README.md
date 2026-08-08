@@ -8,8 +8,16 @@ Generates a daily recipe carousel and posts it to TikTok
 generate  →  render  →  stage  →  gate  →  publish
  recipe      hero photo  public   quality   TikTok
  caption     + 3 slides  URLs     checks
- hashtags
+ hashtags                + phone
+                           page
 ```
+
+**You can run all of this without a TikTok developer account.** Set the
+`MANUAL_MODE` repository variable to `true` (or pass `--manual`) and the pipeline
+stops after staging, having published everything to `today.html` on the Pages
+site — open it on a phone, save three images, copy the caption, post. Since
+drafts mode requires you to open TikTok and choose a sound anyway, API access
+saves only the file transfer.
 
 Each stage reads and writes `out/<date>/post.json`, so any stage can be re-run on
 its own against a previous stage's output.
@@ -43,9 +51,21 @@ changes.
 
 ---
 
-## Phase 0 — start posting today, no API access
+## Manual mode — the whole system, no API access
 
-TikTok app approval takes real time. You do not have to wait for it.
+TikTok app approval takes real time, and you may never need it. Set one
+repository variable:
+
+| Variable | Value |
+|---|---|
+| `MANUAL_MODE` | `true` |
+
+The scheduled job now runs end to end every day and stops before the API call,
+having published the finished post to **`<PAGES_BASE_URL>/today.html`**. Open
+that on your phone, save the three images, tap *Copy caption*, post. A minute a
+day, and nothing to install or maintain.
+
+Running it yourself instead of waiting for the cron:
 
 ```bash
 cd recipe-social
@@ -53,21 +73,23 @@ pip install -r requirements.txt
 
 export ANTHROPIC_API_KEY=sk-ant-...     # recipe generation
 export GEMINI_API_KEY=...               # food photography
+export PAGES_BASE_URL=https://<user>.github.io/c2-fit
 
-python -m src.cli run --no-publish
+python -m src.cli run --manual
 ```
 
-On **Windows**, use PowerShell and set the keys with `$env:ANTHROPIC_API_KEY =
-"sk-ant-..."` — `export` is shell-specific. You need Chrome installed; the
-renderer finds it at the standard install paths without any PATH setup.
+Then commit and push `docs/` so Pages serves it. On **Windows**, use PowerShell
+and set the keys with `$env:ANTHROPIC_API_KEY = "sk-ant-..."` — `export` is
+shell-specific. You need Chrome installed; the renderer finds it at the standard
+install paths without any PATH setup.
 
-Or skip local setup entirely: run the **Daily recipe post** workflow from the
-Actions tab with `no_publish` ticked, and download the slides from the run's
-artifacts.
+`run --no-publish` is the stricter variant: it stops after rendering and writes
+nothing public, leaving `slide1.png`, `slide2.png`, `slide3.png`, and
+`caption.txt` in `out/<today>/` to move around by hand.
 
-That writes `out/<today>/` containing `slide1.png`, `slide2.png`, `slide3.png`,
-and `caption.txt`. Airdrop them to your phone and post by hand. Everything from
-here is about removing that manual step.
+**What API access would actually add:** it uploads the carousel into your drafts
+so you skip saving three images. It does not choose the sound and it does not
+publish for you. Weigh that against the review before doing the work.
 
 ---
 
@@ -195,7 +217,8 @@ python -m src.cli wait                # block until Pages serves them
 python -m src.cli gate                # quality checks
 python -m src.cli publish --dry-run   # print payloads, send nothing
 python -m src.cli run                 # the whole chain
-python -m src.cli run --no-publish    # Phase 0: build assets only
+python -m src.cli run --manual       # build + stage, post from today.html by hand
+python -m src.cli run --no-publish    # Phase 0: build assets only, touch nothing public
 
 python -m src.cli --date 2026-07-26 render   # re-run one stage
 python -m pytest tests/ -q
@@ -223,6 +246,7 @@ one.
 
 | Variable | Default | Purpose |
 |---|---|---|
+| `MANUAL_MODE` | unset | `true` stops before TikTok and posts via `today.html`. No developer app needed |
 | `TIKTOK_POST_MODE` | `MEDIA_UPLOAD` | `DIRECT_POST` for fully automatic (post-audit) |
 | `TIKTOK_AUTO_ADD_MUSIC` | `true` | Let TikTok attach a trending sound (DIRECT_POST only) |
 | `IMAGE_PROVIDER` | `gemini` | Image backend |

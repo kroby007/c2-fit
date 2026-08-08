@@ -203,3 +203,80 @@ def test_slides_carry_the_configured_handle(wired: pathlib.Path) -> None:
          "TITLE": recipe.title, "HOOK": recipe.hook},
     )
     assert handle in markup
+
+
+def test_manual_run_writes_a_postable_phone_page(wired: pathlib.Path) -> None:
+    """The manual path has to be self-sufficient: no API, no file transfer.
+
+    Everything needed to post by hand must be on this one page, at the public
+    URLs, or the whole point of it is lost.
+    """
+    _run("run", "--manual", "--no-check-image")
+
+    page_path = config.DOCS_DIR / "today.html"
+    assert page_path.exists(), "manual mode must write the phone page"
+    page = page_path.read_text(encoding="utf-8")
+
+    post = Post.load(config.OUT_DIR / DATE / "post.json")
+    assert len(post.slide_urls) == 3
+
+    # Public URLs, not local paths — the page is opened on a phone.
+    for url in post.slide_urls:
+        assert url in page
+        assert url.startswith("https://")
+    assert "out/" not in page, "must not leak local working paths"
+
+    # The caption has to be present in full, hashtags included.
+    assert post.recipe.title in page
+    assert post.hashtags[0] in page
+    assert "Copy caption" in page
+
+    # Self-contained: a phone on mobile data with a blocked CDN still renders it.
+    for offsite in ("http://fonts.", "https://fonts.", "cdn.", "<link"):
+        assert offsite not in page, f"page must not depend on {offsite}"
+
+
+def test_manual_run_sends_nothing_and_records_nothing(
+    wired: pathlib.Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Manual mode must stop short of TikTok even with credentials present."""
+    monkeypatch.setenv("TIKTOK_CLIENT_KEY", "fake")
+    monkeypatch.setenv("TIKTOK_CLIENT_SECRET", "fake")
+    monkeypatch.setenv("TIKTOK_REFRESH_TOKEN", "fake")
+
+    def explode(*args, **kwargs):
+        raise AssertionError("manual mode must not reach a publisher")
+
+    monkeypatch.setattr("src.publish.tiktok.TikTokPublisher.publish", explode)
+    _run("run", "--manual", "--no-check-image")
+
+    post = Post.load(config.OUT_DIR / DATE / "post.json")
+    assert post.published == {}
+
+
+def test_manual_mode_env_var_matches_the_flag(
+    wired: pathlib.Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """MANUAL_MODE is how the scheduled job opts in; it must behave as --manual."""
+    monkeypatch.setenv("MANUAL_MODE", "true")
+
+    def explode(*args, **kwargs):
+        raise AssertionError("MANUAL_MODE=true must not reach a publisher")
+
+    monkeypatch.setattr("src.publish.tiktok.TikTokPublisher.publish", explode)
+    _run("run", "--no-check-image")
+
+    assert (config.DOCS_DIR / "today.html").exists()
+    assert Post.load(config.OUT_DIR / DATE / "post.json").published == {}
+
+
+def test_held_post_page_warns_before_it_is_posted(wired: pathlib.Path) -> None:
+    """A held post must say so on the page, or the gate is silently bypassed."""
+    from src.render import handoff
+
+    recipe = Recipe.from_dict(json.loads((FIXTURES / "recipe_good.json").read_text()))
+    held = Post(recipe=recipe, date=DATE, caption="x", hashtags=["#a"],
+                held=True, hold_reasons=["macros do not add up"])
+    page = handoff.render_page(held, ["https://example.github.io/c2-fit/media/x/s1.png"])
+    assert "held this post" in page
+    assert "macros do not add up" in page

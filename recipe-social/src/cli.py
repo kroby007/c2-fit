@@ -11,11 +11,17 @@ Phase 0 usage — no platform API access required:
     python -m src.cli run --no-publish
 
 writes finished slides and a caption to out/<date>/ for posting by hand.
+
+    python -m src.cli run --manual
+
+goes one better: it also stages the slides to the public site and writes the
+phone page, so posting by hand needs no file transfer and no TikTok app.
 """
 from __future__ import annotations
 
 import argparse
 import datetime as dt
+import os
 import pathlib
 import shutil
 import sys
@@ -124,6 +130,16 @@ def cmd_stage(args: argparse.Namespace) -> None:
     post.save(_post_path(date))
     for url in post.slide_urls:
         print(f"  {url}")
+
+    # The phone page costs nothing to write and is the whole manual-posting
+    # path, so it is produced on every stage rather than behind a flag — useful
+    # even when publishing succeeds, as a look at what actually went out.
+    from .render import handoff
+
+    handoff.write_page(post, post.slide_urls)
+    base = os.environ.get("PAGES_BASE_URL", "").rstrip("/")
+    print(f"\n  Post it from your phone: {base}/{handoff.PAGE_NAME}")
+
     print(
         "\nThese must be live before publishing — commit and push docs/, and let "
         "GitHub Pages finish building."
@@ -288,6 +304,17 @@ def cmd_run(args: argparse.Namespace) -> None:
         return
 
     cmd_stage(args)
+
+    # Manual mode stops here on purpose. Staging has already put the slides on
+    # the public site and written the phone page, which is everything posting by
+    # hand needs — and unlike publishing, it requires no TikTok app at all.
+    if args.manual or os.environ.get("MANUAL_MODE", "").lower() == "true":
+        print(
+            "\nManual mode: nothing was sent to TikTok. Commit and push docs/, "
+            "then open the phone page above and post it yourself."
+        )
+        return
+
     cmd_publish(args)
 
 
@@ -341,6 +368,12 @@ def main(argv: list[str] | None = None) -> None:
     run.add_argument(
         "--no-publish", action="store_true",
         help="Phase 0: stop after rendering, leaving assets to post by hand.",
+    )
+    run.add_argument(
+        "--manual", action="store_true",
+        help="Build and stage everything, then stop before TikTok. Post from the "
+             "phone page the stage step writes. Needs no TikTok app. Can also be "
+             "set permanently with the MANUAL_MODE=true environment variable.",
     )
     run.add_argument("--no-check-image", dest="check_image", action="store_false")
     run.set_defaults(check_image=True)

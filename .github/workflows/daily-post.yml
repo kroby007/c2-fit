@@ -6,10 +6,14 @@ on:
     - cron: "0 15 * * *"
   workflow_dispatch:
     inputs:
-      no_publish:
+      manual:
         # First because it is the one to reach for: GitHub renders only these
         # descriptions as the form labels, so each has to identify itself.
-        description: "no_publish — stop after rendering. Download the slides from this run's artifacts and post by hand. Nothing is committed, nothing reaches TikTok."
+        description: "manual — build everything and publish it to the phone page at /today.html for posting by hand. Needs no TikTok app. Nothing reaches TikTok."
+        type: boolean
+        default: false
+      no_publish:
+        description: "no_publish — stop after rendering, without touching the website. Slides come out in this run's artifacts as a zip."
         type: boolean
         default: false
       dry_run:
@@ -43,6 +47,11 @@ jobs:
       TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
       TIKTOK_REFRESH_TOKEN: ${{ secrets.TIKTOK_REFRESH_TOKEN }}
       TIKTOK_POST_MODE: ${{ vars.TIKTOK_POST_MODE || 'MEDIA_UPLOAD' }}
+      # Set the MANUAL_MODE repository variable to 'true' to run the whole
+      # pipeline daily without any TikTok app: it builds, stages to the Pages
+      # site, and writes today.html for posting by hand. Unset it once the
+      # Content Posting API is approved.
+      MANUAL_MODE: ${{ vars.MANUAL_MODE }}
       # Instagram and Facebook are intentionally absent: publishing is TikTok-only
       # for now. Add META_ACCESS_TOKEN / IG_USER_ID / FB_PAGE_ID /
       # FB_PAGE_ACCESS_TOKEN here when turning those platforms on.
@@ -107,7 +116,8 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/media recipe-social/state
+          # docs/today.html is the phone page written by the stage step.
+          git add docs/media docs/today.html recipe-social/state
           if git diff --staged --quiet; then
             echo "Nothing to commit."
           else
@@ -117,13 +127,27 @@ jobs:
 
       - name: Wait for GitHub Pages to serve the slides
         # TikTok pulls the images from these URLs; publishing before Pages has
-        # rebuilt hands it a 404 that only surfaces asynchronously.
+        # rebuilt hands it a 404 that only surfaces asynchronously. Manual mode
+        # waits too, so the phone page is never announced before it works.
         if: steps.gate.outputs.held == 'false' && !inputs.no_publish
         working-directory: recipe-social
         run: python -m src.cli wait --timeout 420
 
+      - name: Ready to post by hand
+        if: steps.gate.outputs.held == 'false' && !inputs.no_publish && (vars.MANUAL_MODE == 'true' || inputs.manual)
+        run: |
+          {
+            echo "## Ready to post"
+            echo ""
+            echo "Open this on your phone, save the three images, copy the caption:"
+            echo ""
+            echo "### ${{ vars.PAGES_BASE_URL }}/today.html"
+            echo ""
+            echo "Nothing was sent to TikTok — manual mode is on."
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Publish
-        if: steps.gate.outputs.held == 'false' && !inputs.no_publish
+        if: steps.gate.outputs.held == 'false' && !inputs.no_publish && vars.MANUAL_MODE != 'true' && !inputs.manual
         working-directory: recipe-social
         run: |
           python -m src.cli publish \

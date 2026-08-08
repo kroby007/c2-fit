@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Post today — C2 Fit</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0; padding: 20px 16px 64px;
+  background: #14110F; color: #F5EFE6;
+  font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+.wrap { max-width: 560px; margin: 0 auto; }
+h1 { font-size: 21px; margin: 0 0 2px; letter-spacing: -0.01em; }
+.date { color: #A89C8E; font-size: 14px; margin: 0 0 22px; }
+.steps {
+  background: #1E1A17; border: 1px solid #3A332E; border-radius: 12px;
+  padding: 14px 16px 14px 34px; margin: 0 0 26px; font-size: 14.5px; color: #D8CEC2;
+}
+.steps li { margin: 5px 0; }
+h2 {
+  font-size: 12px; text-transform: uppercase; letter-spacing: 0.09em;
+  color: #A89C8E; margin: 30px 0 10px; font-weight: 700;
+}
+figure { margin: 0 0 16px; }
+figure img {
+  display: block; width: 100%; height: auto; border-radius: 12px;
+  border: 1px solid #3A332E; background: #1E1A17;
+}
+figcaption { color: #A89C8E; font-size: 13px; margin-top: 7px; }
+.caption-box {
+  background: #1E1A17; border: 1px solid #3A332E; border-radius: 12px;
+  padding: 15px; white-space: pre-wrap; word-wrap: break-word;
+  font-size: 15px; margin: 0 0 12px;
+}
+button {
+  width: 100%; padding: 15px; font-size: 16px; font-weight: 700;
+  color: #14110F; background: #FF4D3D; border: 0; border-radius: 12px;
+  cursor: pointer; font-family: inherit;
+}
+button:active { opacity: 0.75; }
+button.done { background: #35D07F; }
+.note {
+  color: #A89C8E; font-size: 13.5px; margin-top: 30px;
+  border-top: 1px solid #3A332E; padding-top: 16px;
+}
+.held {
+  background: #3A2018; border: 1px solid #FF4D3D; border-radius: 12px;
+  padding: 15px; margin: 0 0 24px; font-size: 14.5px;
+}
+.held strong { color: #FF9A8F; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Chili Crisp Chicken Bowls</h1>
+  <p class="date">Sunday 26 July 2026 &middot; @c2_fit_</p>
+
+  
+
+  <ol class="steps">
+    <li>Long-press each image below and save it, in order.</li>
+    <li>Tap <em>Copy caption</em>.</li>
+    <li>In TikTok: <strong>+</strong> &rarr; Upload &rarr; select all three, keeping the order.</li>
+    <li>Paste the caption, pick a trending sound, post.</li>
+  </ol>
+
+  <h2>Slides</h2>
+  <figure><img src="https://example.github.io/c2-fit/media/2026-07-26/slide1.png" alt="Slide 1" loading="lazy"><figcaption>Slide 1 of 3</figcaption></figure><figure><img src="https://example.github.io/c2-fit/media/2026-07-26/slide2.png" alt="Slide 2" loading="lazy"><figcaption>Slide 2 of 3</figcaption></figure><figure><img src="https://example.github.io/c2-fit/media/2026-07-26/slide3.png" alt="Slide 3" loading="lazy"><figcaption>Slide 3 of 3</figcaption></figure>
+
+  <h2>Caption</h2>
+  <div class="caption-box" id="caption">🔥 44g protein for $2.90 a bowl
+
+Chili Crisp Chicken Bowls — 4 servings, 22 minutes, 8 ingredients.
+
+💪 44g protein  ·  🔥 612 cal  ·  🍞 62g carbs  ·  🥑 19g fat
+💵 About $2.90 a serving
+💪 High Protein  💵 Under $3
+
+👆 Full ingredients and steps in the slides
+🔖 Save this one for later
+⚠️ Contains soy
+
+Follow for a new one every day @c2_fit_
+Macros are estimates.
+
+#foodtok #cooking #proteinrecipes #quickmeals #budgetmeals #cheapmeals #groceryhaul #easyhomecooking #onepanmeals #nofussdinner</div>
+  <button id="copy" type="button">Copy caption</button>
+
+  <p class="note">Picking the sound is the one step no API can do — TikTok has
+  no parameter that takes a sound ID. So it is yours either way, and this page
+  is the rest of the work already done.</p>
+</div>
+<script>
+document.querySelector('#copy').addEventListener('click', async function () {
+  var text = document.querySelector('#caption').innerText;
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch (err) {
+    // Older mobile browsers, and any page not served over HTTPS, have no
+    // clipboard API. Selecting the text at least leaves one tap to copy.
+    var range = document.createRange();
+    range.selectNodeContents(document.querySelector('#caption'));
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    this.textContent = 'Press and hold the caption to copy';
+    return;
+  }
+  this.textContent = 'Copied';
+  this.classList.add('done');
+});
+</script>
+</body>
+</html>
