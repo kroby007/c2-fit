@@ -6,16 +6,18 @@ on:
     - cron: "0 15 * * *"
   workflow_dispatch:
     inputs:
-      dry_run:
-        description: "Build everything but send nothing to the platforms"
+      no_publish:
+        # First because it is the one to reach for: GitHub renders only these
+        # descriptions as the form labels, so each has to identify itself.
+        description: "no_publish — stop after rendering. Download the slides from this run's artifacts and post by hand. Nothing is committed, nothing reaches TikTok."
         type: boolean
         default: false
-      no_publish:
-        description: "Phase 0: stop after rendering, leaving assets to post by hand"
+      dry_run:
+        description: "dry_run — run everything including staging images to Pages, but stop at the final API call. Leave off if you ticked no_publish."
         type: boolean
         default: false
       platforms:
-        description: "Comma-separated subset. Blank = tiktok only (the default)."
+        description: "platforms — comma-separated subset, e.g. tiktok,instagram. Leave blank for TikTok only (the default)."
         type: string
         default: ""
 
