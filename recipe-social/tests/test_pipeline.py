@@ -288,3 +288,27 @@ def test_held_post_page_warns_before_it_is_posted(wired: pathlib.Path) -> None:
     page = handoff.render_page(held, ["https://example.github.io/c2-fit/media/x/s1.png"])
     assert "held this post" in page
     assert "macros do not add up" in page
+
+
+@pytest.mark.parametrize(
+    "value,manual",
+    [
+        ("true", True),
+        ("TRUE", True),
+        (" true ", True),
+        ("1", True),
+        ("yes", True),
+        # The value someone types when they paste the whole assignment into the
+        # value box. It must not read as "publish to TikTok".
+        ("MANUAL_MODE = true", True),
+        ("", False),
+        ("false", False),
+        ("0", False),
+        ("off", False),
+    ],
+)
+def test_manual_mode_reads_unclear_values_as_manual(
+    value: str, manual: bool, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("MANUAL_MODE", value)
+    assert cli._manual_mode_set() is manual

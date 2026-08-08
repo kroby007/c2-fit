@@ -272,6 +272,16 @@ def cmd_publish(args: argparse.Namespace) -> None:
         sys.exit(1)
 
 
+# Anything but empty or an explicit no counts as on. Demanding exactly "true"
+# turned a typo in the value into "publish to TikTok", and for this flag the
+# safe reading of an unclear value is the one that posts nothing.
+_MANUAL_OFF = {"", "false", "0", "no", "off"}
+
+
+def _manual_mode_set() -> bool:
+    return os.environ.get("MANUAL_MODE", "").strip().lower() not in _MANUAL_OFF
+
+
 def cmd_run(args: argparse.Namespace) -> None:
     from .state import queue
 
@@ -308,7 +318,7 @@ def cmd_run(args: argparse.Namespace) -> None:
     # Manual mode stops here on purpose. Staging has already put the slides on
     # the public site and written the phone page, which is everything posting by
     # hand needs — and unlike publishing, it requires no TikTok app at all.
-    if args.manual or os.environ.get("MANUAL_MODE", "").lower() == "true":
+    if args.manual or _manual_mode_set():
         print(
             "\nManual mode: nothing was sent to TikTok. Commit and push docs/, "
             "then open the phone page above and post it yourself."

@@ -52,6 +52,14 @@ jobs:
       # site, and writes today.html for posting by hand. Unset it once the
       # Content Posting API is approved.
       MANUAL_MODE: ${{ vars.MANUAL_MODE }}
+      # Resolved once here, and deliberately generous about what counts as "on":
+      # anything other than empty or an explicit no. Requiring exactly 'true'
+      # meant a fat-fingered value read as "publish to TikTok" — the wrong way
+      # for this particular flag to fail, since the safe state is not posting.
+      MANUAL: >-
+        ${{ (inputs.manual
+             || !contains(fromJSON('["", "false", "0", "no", "off"]'), vars.MANUAL_MODE)
+            ) && 'on' || 'off' }}
       # Instagram and Facebook are intentionally absent: publishing is TikTok-only
       # for now. Add META_ACCESS_TOKEN / IG_USER_ID / FB_PAGE_ID /
       # FB_PAGE_ACCESS_TOKEN here when turning those platforms on.
@@ -134,7 +142,7 @@ jobs:
         run: python -m src.cli wait --timeout 420
 
       - name: Ready to post by hand
-        if: steps.gate.outputs.held == 'false' && !inputs.no_publish && (vars.MANUAL_MODE == 'true' || inputs.manual)
+        if: steps.gate.outputs.held == 'false' && !inputs.no_publish && env.MANUAL == 'on'
         run: |
           {
             echo "## Ready to post"
@@ -147,7 +155,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Publish
-        if: steps.gate.outputs.held == 'false' && !inputs.no_publish && vars.MANUAL_MODE != 'true' && !inputs.manual
+        if: steps.gate.outputs.held == 'false' && !inputs.no_publish && env.MANUAL == 'off'
         working-directory: recipe-social
         run: |
           python -m src.cli publish \
