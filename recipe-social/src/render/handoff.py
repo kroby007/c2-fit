@@ -55,6 +55,9 @@ figcaption { color: #A89C8E; font-size: 13px; margin-top: 7px; }
   padding: 15px; white-space: pre-wrap; word-wrap: break-word;
   font-size: 15px; margin: 0 0 12px;
 }
+/* The title is one line and gets read at a glance before copying, so it is set
+   larger and heavier than the caption body rather than sharing its type. */
+.title-box { font-size: 19px; font-weight: 700; white-space: normal; }
 button {
   width: 100%; padding: 15px; font-size: 16px; font-weight: 700;
   color: #14110F; background: #FF4D3D; border: 0; border-radius: 12px;
@@ -74,23 +77,27 @@ button.done { background: #35D07F; }
 """
 
 _SCRIPT = """
-document.querySelector('#copy').addEventListener('click', async function () {
-  var text = document.querySelector('#caption').innerText;
-  try {
-    await navigator.clipboard.writeText(text);
-  } catch (err) {
-    // Older mobile browsers, and any page not served over HTTPS, have no
-    // clipboard API. Selecting the text at least leaves one tap to copy.
-    var range = document.createRange();
-    range.selectNodeContents(document.querySelector('#caption'));
-    var sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(range);
-    this.textContent = 'Press and hold the caption to copy';
-    return;
-  }
-  this.textContent = 'Copied';
-  this.classList.add('done');
+// One handler for every copy button, keyed by data-copy, so adding another
+// copyable block is markup only.
+document.querySelectorAll('button[data-copy]').forEach(function (button) {
+  button.addEventListener('click', async function () {
+    var source = document.querySelector(this.getAttribute('data-copy'));
+    try {
+      await navigator.clipboard.writeText(source.innerText);
+    } catch (err) {
+      // Older mobile browsers, and any page not served over HTTPS, have no
+      // clipboard API. Selecting the text at least leaves one tap to copy.
+      var range = document.createRange();
+      range.selectNodeContents(source);
+      var selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+      this.textContent = 'Press and hold the text to copy';
+      return;
+    }
+    this.textContent = 'Copied';
+    this.classList.add('done');
+  });
 });
 """
 
@@ -138,17 +145,21 @@ def render_page(post: Post, urls: list[str]) -> str:
 
   <ol class="steps">
     <li>Long-press each image below and save it, in order.</li>
-    <li>Tap <em>Copy caption</em>.</li>
     <li>In TikTok: <strong>+</strong> &rarr; Upload &rarr; select all three, keeping the order.</li>
-    <li>Paste the caption, pick a trending sound, post.</li>
+    <li>Tap <em>Copy title</em> or <em>Copy caption</em> and paste where you need it.</li>
+    <li>Pick a trending sound, post.</li>
   </ol>
 
   <h2>Slides</h2>
   {figures}
 
+  <h2>Title</h2>
+  <div class="caption-box title-box" id="title">{html.escape(recipe.title)}</div>
+  <button type="button" data-copy="#title">Copy title</button>
+
   <h2>Caption</h2>
   <div class="caption-box" id="caption">{html.escape(post.full_caption)}</div>
-  <button id="copy" type="button">Copy caption</button>
+  <button type="button" data-copy="#caption">Copy caption</button>
 
   <p class="note">Picking the sound is the one step no API can do — TikTok has
   no parameter that takes a sound ID. So it is yours either way, and this page

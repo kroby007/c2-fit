@@ -231,6 +231,14 @@ def test_manual_run_writes_a_postable_phone_page(wired: pathlib.Path) -> None:
     assert post.hashtags[0] in page
     assert "Copy caption" in page
 
+    # The title is copyable on its own, and its button targets the title block
+    # rather than the caption — an easy thing to get backwards.
+    assert "Copy title" in page
+    assert 'data-copy="#title"' in page
+    assert 'id="title"' in page
+    assert page.index('id="title"') < page.index('id="caption"'), \
+        "the title block must come above the caption block"
+
     # Self-contained: a phone on mobile data with a blocked CDN still renders it.
     for offsite in ("http://fonts.", "https://fonts.", "cdn.", "<link"):
         assert offsite not in page, f"page must not depend on {offsite}"
