@@ -1,0 +1,59 @@
+# The brief handed to the recipe generator. Tightening these constraints is the
+# single highest-leverage way to change what the account posts.
+
+positioning: >
+  Fast, cheap, high-protein food a normal person can actually cook on a weeknight
+  with supermarket ingredients and no special equipment beyond a skillet, sheet
+  pan, or air fryer. Never fussy, never cheffy, never 40 ingredients.
+
+audience: >
+  People in their 20s and 30s who want to eat well without cooking becoming a
+  hobby: gym-goers tracking protein, people on a tight grocery budget, and anyone
+  who gets home at 7pm and needs dinner in 20 minutes.
+
+constraints:
+  max_ingredients: 10
+  max_total_minutes: 30
+  min_servings: 2
+  max_servings: 4
+  max_cost_per_serving: 4.00
+  # Every recipe must qualify for at least this many series badges. Forces the
+  # generator toward recipes that are genuinely fast OR cheap OR high protein,
+  # rather than bland middle-of-the-road filler.
+  min_series_tags: 1
+
+methods:
+  # Rotated so the feed does not become all one appliance.
+  - skillet
+  - sheet_pan
+  - air_fryer
+  - one_pot
+  - no_cook
+
+require:
+  - "Common supermarket ingredients only — nothing that needs a specialty store."
+  - "Exact quantities in both imperial and metric-friendly units (e.g. '1 lb (450g)')."
+  - "Per-serving macros: calories, protein, carbs, fat."
+  - "A realistic US grocery cost estimate per serving."
+  - "Steps written as short imperative sentences, max 18 words each."
+  - "A hook that names a concrete, specific benefit — a number beats an adjective."
+
+avoid:
+  - "Recipes that are really just an assembly of pre-made products."
+  - "Protein claims that depend on an unrealistic serving size."
+  - "Ingredients commonly disliked enough to tank engagement (liver, canned sardines)."
+  - "Anything requiring marinating, resting, or proofing longer than the stated time."
+  - "Clickbait hooks that the recipe does not deliver on."
+
+# Not exhaustive — the quality gate flags these for a caption warning, it does
+# not reject the recipe.
+allergens_to_flag:
+  - peanut
+  - tree nut
+  - shellfish
+  - soy
+  - egg
+  - dairy
+  - gluten
+  - sesame
+  - fish

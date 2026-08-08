@@ -1,0 +1,14 @@
+# Deliberately small. Slide rendering uses headless Chromium (already present on
+# GitHub Actions runners), not an image library, and the platform publishers speak
+# plain HTTP — so there is no vendor SDK to pin here beyond the two generation APIs.
+#
+# Floors are the versions this was verified against: older anthropic releases
+# lack output_config.format, and older google-genai lacks ImageConfig.aspect_ratio.
+anthropic>=0.120.0       # recipe generation + hero image sanity check
+google-genai>=1.75.0     # default image provider
+requests>=2.31.0         # TikTok / Meta publishing
+PyYAML>=6.0              # config
+PyNaCl>=1.5.0            # encrypting the rotated TikTok refresh token into GitHub Secrets
+
+# Tests only
+pytest>=8.0

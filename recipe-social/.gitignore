@@ -1,0 +1,12 @@
+# Generated posts. Slides that actually publish are copied into docs/media/ and
+# committed from there; this is the working directory.
+out/
+
+# A rotated TikTok refresh token that could not be written back to Actions
+# secrets. Sensitive — must never be committed.
+state/*.local
+
+__pycache__/
+*.pyc
+.pytest_cache/
+.env

@@ -1,0 +1,84 @@
+# Visual identity for the recipe carousels.
+# Everything here feeds CSS custom properties in the slide templates, so
+# restyling the entire account is an edit to this file — no code changes.
+
+account:
+  name: "C2 Fit"
+  handle: "@c2_fit_"
+  tagline: "fast. cheap. high protein."
+  cta: "Follow for a new one every day"
+
+# 1080x1350 is the 4:5 portrait ratio. TikTok photo posts and Instagram
+# carousels both render this at full width without cropping.
+canvas:
+  width: 1080
+  height: 1350
+
+palette:
+  bg: "#14110F"          # warm near-black — food photography pops against it
+  surface: "#1E1A17"
+  surface_alt: "#282320"
+  text: "#F5EFE6"        # warm cream, easier on the eye than pure white
+  text_muted: "#A89C8E"
+  hairline: "#3A332E"
+
+fonts:
+  # Committed under assets/fonts/ so local renders and CI renders are identical.
+  display: "Anton"       # hook headlines — heavy condensed, readable at thumbnail size
+  body: "Inter"
+  # Used only if the committed files are somehow missing.
+  fallback: "'Liberation Sans Narrow', 'DejaVu Sans', sans-serif"
+
+# The four recurring series. Each `rule` is evaluated in src/recipes/quality.py
+# against the recipe's actual numbers, so a badge the recipe does not earn gets
+# dropped — the generator cannot claim HIGH PROTEIN on a 22g recipe.
+# Rules are structured rather than expression strings so checking them needs no
+# eval; supported ops are >=, <=, ==.
+series:
+  high_protein:
+    label: "HIGH PROTEIN"
+    emoji: "💪"
+    color: "#FF4D3D"
+    rule: {field: protein_g, op: ">=", value: 30}
+  budget:
+    label: "UNDER $3"
+    emoji: "💵"
+    color: "#35D07F"
+    rule: {field: cost_per_serving, op: "<=", value: 3.00}
+  air_fryer:
+    label: "AIR FRYER"
+    emoji: "🌀"
+    color: "#FFB000"
+    rule: {field: method, op: "==", value: air_fryer}
+  fifteen_min:
+    label: "15 MINUTES"
+    emoji: "⚡"
+    color: "#4DA3FF"
+    rule: {field: total_minutes, op: "<=", value: 15}
+
+# Macro chips on slide 2, in display order.
+# Food photography direction. These lines are prepended to every image prompt so
+# the grid reads as one account rather than a pile of unrelated stock shots.
+# This is the single highest-leverage block for changing how the feed looks.
+photography:
+  # Gemini supports 1:1, 2:3, 3:2, 3:4, 4:3, 9:16, 16:9, 21:9 — not 4:5. We
+  # generate 3:4 and let the slide CSS cover-crop it to the 4:5 canvas.
+  aspect_ratio: "3:4"
+  style: >
+    Appetizing food photography, shot slightly above at a 45-degree angle on a
+    dark matte ceramic plate over a warm charcoal stone surface. Single soft
+    directional light from the upper left with gentle falloff and soft shadows.
+    Shallow depth of field, rich saturated colour, visible texture and steam
+    where natural. Styled but not fussy — food a real person cooked, plated well.
+  # Appended last so it outranks anything in the dish description.
+  negative: >
+    No text, no words, no logos, no watermarks, no hands, no people, no cutlery
+    branding, no plastic packaging, no bright white studio background.
+
+macros:
+  - {key: "calories",  label: "CAL",     unit: ""}
+  - {key: "protein_g", label: "PROTEIN", unit: "g"}
+  - {key: "carbs_g",   label: "CARBS",   unit: "g"}
+  - {key: "fat_g",     label: "FAT",     unit: "g"}
+
+disclaimer: "Macros are estimates."

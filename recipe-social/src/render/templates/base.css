@@ -1,0 +1,283 @@
+/* Shared slide styling. Colors, fonts, and the canvas size are injected from
+   brand.yaml as CSS custom properties, so restyling the account is a config edit.
+
+   Safe area: TikTok and Instagram overlay their own UI on top of the image —
+   caption and username along the bottom, action buttons down the right side.
+   Anything inside the padding below stays clear of both. */
+
+@font-face {
+  font-family: 'Anton';
+  src: url('{{FONT_ANTON}}') format('truetype');
+  font-weight: 400;
+}
+@font-face {
+  font-family: 'Inter';
+  src: url('{{FONT_INTER_REGULAR}}') format('truetype');
+  font-weight: 400;
+}
+@font-face {
+  font-family: 'Inter';
+  src: url('{{FONT_INTER_BOLD}}') format('truetype');
+  font-weight: 700;
+}
+@font-face {
+  font-family: 'Inter';
+  src: url('{{FONT_INTER_BLACK}}') format('truetype');
+  font-weight: 900;
+}
+
+:root {
+  --bg: {{BG}};
+  --surface: {{SURFACE}};
+  --surface-alt: {{SURFACE_ALT}};
+  --text: {{TEXT}};
+  --muted: {{TEXT_MUTED}};
+  --hairline: {{HAIRLINE}};
+  --accent: {{ACCENT}};
+
+  --pad-x: 88px;
+  --pad-top: 104px;
+  --pad-bottom: 190px;  /* clears the platform caption overlay */
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: {{WIDTH}}px;
+  height: {{HEIGHT}}px;
+  overflow: hidden;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', 'Liberation Sans', 'DejaVu Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  position: relative;
+}
+
+.slide {
+  width: {{WIDTH}}px;
+  height: {{HEIGHT}}px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ---------- hero photo ---------- */
+
+.hero {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;   /* crops the 3:4 generated image to the 4:5 canvas */
+  object-position: center;
+}
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(20, 17, 15, 0.55) 0%,
+    rgba(20, 17, 15, 0.15) 28%,
+    rgba(20, 17, 15, 0.80) 62%,
+    rgba(20, 17, 15, 0.97) 100%
+  );
+}
+
+/* ---------- shared furniture ---------- */
+
+.handle {
+  position: absolute;
+  top: 52px;
+  left: var(--pad-x);
+  font-weight: 900;
+  font-size: 26px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text);
+  opacity: 0.85;
+}
+
+.step-marker {
+  position: absolute;
+  top: 52px;
+  right: var(--pad-x);
+  font-weight: 900;
+  font-size: 24px;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+}
+
+.content {
+  position: absolute;
+  left: var(--pad-x);
+  right: var(--pad-x);
+  bottom: var(--pad-bottom);
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 30px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 22px;
+  border-radius: 999px;
+  background: var(--badge-color);
+  color: #14110F;
+  font-weight: 900;
+  font-size: 26px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+h1 {
+  font-family: 'Anton', 'Liberation Sans Narrow', sans-serif;
+  font-weight: 400;
+  text-transform: uppercase;
+  line-height: 0.90;
+  letter-spacing: -0.008em;
+  font-size: {{TITLE_SIZE}}px;
+}
+
+.hook {
+  margin-top: 26px;
+  font-weight: 900;
+  font-size: 44px;
+  line-height: 1.15;
+  color: var(--accent);
+}
+
+/* ---------- macro chips ---------- */
+
+.macros {
+  display: flex;
+  gap: 14px;
+}
+
+.macro {
+  flex: 1;
+  background: var(--surface);
+  border: 2px solid var(--hairline);
+  border-radius: 20px;
+  padding: 22px 10px 18px;
+  text-align: center;
+}
+
+.macro .value {
+  font-family: 'Anton', sans-serif;
+  font-size: 54px;
+  line-height: 1;
+}
+
+.macro .label {
+  margin-top: 10px;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+/* ---------- section headings ---------- */
+
+.eyebrow {
+  font-weight: 900;
+  font-size: 26px;
+  letter-spacing: 0.19em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 22px;
+}
+
+/* ---------- lists ---------- */
+
+.ingredients {
+  list-style: none;
+}
+
+.ingredients li {
+  display: flex;
+  gap: 18px;
+  align-items: baseline;
+  padding: {{LIST_PAD}}px 0;
+  border-bottom: 2px solid var(--hairline);
+  font-size: {{LIST_SIZE}}px;
+  line-height: 1.28;
+}
+
+.ingredients li:last-child { border-bottom: none; }
+
+.ingredients .qty {
+  font-weight: 900;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.ingredients .item { color: var(--text); }
+
+.steps { list-style: none; }
+
+.steps li {
+  display: flex;
+  gap: 22px;
+  align-items: flex-start;
+  padding: {{LIST_PAD}}px 0;
+  font-size: {{LIST_SIZE}}px;
+  line-height: 1.32;
+}
+
+.steps .n {
+  flex: 0 0 auto;
+  width: 54px;
+  height: 54px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #14110F;
+  font-weight: 900;
+  font-size: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+/* ---------- footers ---------- */
+
+/* Footers are pinned to the bottom of their panel (margin-top:auto inside a
+   flex column) rather than flowing straight after the list — otherwise a short
+   recipe leaves a dead band above the safe area. */
+.meta {
+  display: flex;
+  gap: 40px;
+  margin-top: auto;
+  padding-top: 26px;
+  border-top: 2px solid var(--hairline);
+}
+
+.meta div { font-size: 26px; color: var(--muted); font-weight: 700; }
+.meta strong { color: var(--text); font-weight: 900; }
+
+.cta {
+  margin-top: auto;
+  padding-top: 26px;
+  border-top: 2px solid var(--hairline);
+  font-size: 32px;
+  font-weight: 900;
+  color: var(--text);
+}
+
+.disclaimer {
+  margin-top: 12px;
+  font-size: 21px;
+  color: var(--muted);
+  font-weight: 400;
+}

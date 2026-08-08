@@ -1,0 +1,26 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>
+{{BASE_CSS}}
+.panel {
+  position: absolute; top: var(--pad-top); left: var(--pad-x); right: var(--pad-x);
+  bottom: var(--pad-bottom);
+  display: flex; flex-direction: column;
+}
+.panel h2 {
+  font-family: 'Anton', sans-serif; font-weight: 400; text-transform: uppercase;
+  font-size: 62px; line-height: 0.95; margin-bottom: 14px;
+}
+</style></head>
+<body>
+  <div class="slide">
+    <div class="handle">{{HANDLE}}</div>
+    <div class="step-marker">{{SLIDE_MARKER}}</div>
+    <div class="panel">
+      <div class="eyebrow">How to make it</div>
+      <h2>{{TITLE}}</h2>
+      <ol class="steps">{{STEPS}}</ol>
+      <div class="cta">{{CTA}}</div>
+      <div class="disclaimer">{{DISCLAIMER}}</div>
+    </div>
+  </div>
+</body></html>

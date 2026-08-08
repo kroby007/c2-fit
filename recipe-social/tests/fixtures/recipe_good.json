@@ -1,0 +1,31 @@
+{
+  "title": "Chili Crisp Chicken Bowls",
+  "hook": "44g protein for $2.90 a bowl",
+  "method": "skillet",
+  "servings": 4,
+  "prep_minutes": 8,
+  "cook_minutes": 14,
+  "ingredients": [
+    {"item": "chicken breast, cubed", "qty": "1.5 lb (680g)"},
+    {"item": "jasmine rice", "qty": "1.5 cups (300g)"},
+    {"item": "chili crisp", "qty": "3 tbsp"},
+    {"item": "low-sodium soy sauce", "qty": "2 tbsp"},
+    {"item": "honey", "qty": "1 tbsp"},
+    {"item": "garlic, minced", "qty": "4 cloves"},
+    {"item": "broccoli florets", "qty": "12 oz (340g)"},
+    {"item": "scallions, sliced", "qty": "3"}
+  ],
+  "steps": [
+    "Cook the rice according to the package directions.",
+    "Toss the cubed chicken with a pinch of salt and set aside.",
+    "Sear the chicken in a hot skillet for 6 minutes until browned.",
+    "Add garlic and broccoli, cook 4 minutes until bright green.",
+    "Stir in chili crisp, soy sauce, and honey. Toss to coat.",
+    "Spoon over rice and finish with sliced scallions."
+  ],
+  "macros": {"calories": 612, "protein_g": 44, "carbs_g": 62, "fat_g": 19},
+  "cost_per_serving": 2.9,
+  "allergens": ["soy"],
+  "series": ["high_protein", "budget"],
+  "image_subject": "Glossy cubes of seared chicken and bright broccoli over jasmine rice in a shallow bowl, chili crisp pooling at the edge, scallions scattered on top."
+}

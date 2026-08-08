@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Authorization code — C2 Fit</title>
+<style>
+  :root { color-scheme: dark; }
+  body {
+    margin: 0; padding: 10vh 6vw; background: #14110F; color: #F5EFE6;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif; line-height: 1.6;
+  }
+  main { max-width: 40rem; }
+  h1 { font-size: 1.7rem; margin: 0 0 .6em; }
+  p { color: #C9BEB2; }
+  code, #code {
+    display: block; margin: 1.2rem 0; padding: 1rem 1.1rem; background: #1E1A17;
+    border: 2px solid #3A332E; border-radius: 12px; font-family: ui-monospace, monospace;
+    font-size: .95rem; word-break: break-all; color: #F5EFE6;
+  }
+  button {
+    background: #FF4D3D; color: #14110F; border: 0; border-radius: 999px;
+    padding: .8rem 1.6rem; font-size: 1rem; font-weight: 700; cursor: pointer;
+  }
+  .error { color: #FF4D3D; font-weight: 600; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Authorization code</h1>
+  <p id="intro">Copy this value and paste it back into the terminal running <code style="display:inline;padding:.15em .4em;margin:0">tiktok_auth.py</code>.</p>
+  <div id="code">Reading…</div>
+  <button id="copy" type="button">Copy to clipboard</button>
+  <p style="margin-top:2rem;font-size:.9rem">
+    This page only reads the value out of your address bar. Nothing is sent
+    anywhere, stored, or logged — it is a static file.
+  </p>
+</main>
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get("code");
+  const error = params.get("error");
+  const box = document.getElementById("code");
+  const copy = document.getElementById("copy");
+
+  if (code) {
+    box.textContent = code;
+  } else if (error) {
+    box.innerHTML = '<span class="error">' + error + " — " +
+      (params.get("error_description") || "authorization was declined") + "</span>";
+    copy.style.display = "none";
+  } else {
+    box.textContent = "No code in the URL. Start the flow again from the script.";
+    copy.style.display = "none";
+  }
+
+  copy.addEventListener("click", async () => {
+    await navigator.clipboard.writeText(box.textContent);
+    copy.textContent = "Copied";
+  });
+</script>
+</body>
+</html>

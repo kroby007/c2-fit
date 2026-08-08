@@ -1,0 +1,80 @@
+# Hashtag pools. The composer draws a mix from each bucket and rotates picks
+# against recent history, so consecutive posts never carry the same block —
+# repeated identical hashtag sets get suppressed on both TikTok and Instagram.
+#
+# Buckets exist because a healthy set spans reach tiers: a couple of huge tags
+# for the ranking signal, several mid-size tags you can realistically rank in,
+# and a few narrow ones where you can actually reach the top posts.
+
+draw:
+  # How many to pull from each bucket per post.
+  broad: 2
+  core: 3
+  series: 3
+  discovery: 3
+  # Hard ceilings. TikTok counts hashtags against the 2200-char caption limit;
+  # Instagram rejects a post outright above 30.
+  max_total: 12
+  max_chars: 300
+
+broad:
+  - "#foodtok"
+  - "#recipe"
+  - "#easyrecipes"
+  - "#cooking"
+  - "#food"
+
+core:
+  - "#highprotein"
+  - "#mealprep"
+  - "#quickmeals"
+  - "#weeknightdinner"
+  - "#healthyrecipes"
+  - "#dinnerideas"
+  - "#budgetmeals"
+  - "#easydinner"
+  - "#proteinrecipes"
+  - "#cookingtiktok"
+
+series:
+  high_protein:
+    - "#highproteinmeals"
+    - "#proteinpacked"
+    - "#gymfood"
+    - "#bulkingmeals"
+    - "#macrofriendly"
+    - "#fitnessfood"
+  budget:
+    - "#budgetmeals"
+    - "#cheapmeals"
+    - "#groceryhaul"
+    - "#eatingonabudget"
+    - "#cheapeats"
+    - "#budgetcooking"
+  air_fryer:
+    - "#airfryer"
+    - "#airfryerrecipes"
+    - "#airfryermeals"
+    - "#airfryerdinner"
+    - "#ninjafoodi"
+  fifteen_min:
+    - "#15minutemeals"
+    - "#quickdinner"
+    - "#fastfood"
+    - "#lazymeals"
+    - "#20minutemeals"
+
+# Lower-competition tags — where a small account can actually land in top posts.
+discovery:
+  - "#dinnerin20"
+  - "#proteindinner"
+  - "#simplemeals"
+  - "#realfoodfast"
+  - "#weeklymealplan"
+  - "#highproteindinner"
+  - "#easyhomecooking"
+  - "#cheapproteinmeals"
+  - "#nofussdinner"
+  - "#studentmeals"
+  - "#onepanmeals"
+  - "#macrotracking"

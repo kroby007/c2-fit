@@ -1,0 +1,138 @@
+name: Daily recipe post
+
+on:
+  schedule:
+    # 15:00 UTC — late morning US Eastern, when this audience is deciding lunch.
+    - cron: "0 15 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Build everything but send nothing to the platforms"
+        type: boolean
+        default: false
+      no_publish:
+        description: "Phase 0: stop after rendering, leaving assets to post by hand"
+        type: boolean
+        default: false
+      platforms:
+        description: "Comma-separated subset. Blank = tiktok only (the default)."
+        type: string
+        default: ""
+
+concurrency:
+  # Two runs publishing the same day would double-post.
+  group: daily-post
+  cancel-in-progress: false
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # commit the staged media and the posting history
+      issues: write     # open an issue when the quality gate holds a post
+    env:
+      # Generation
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      # Media hosting — must equal the URL prefix verified with TikTok
+      PAGES_BASE_URL: ${{ vars.PAGES_BASE_URL }}
+      # TikTok
+      TIKTOK_CLIENT_KEY: ${{ secrets.TIKTOK_CLIENT_KEY }}
+      TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
+      TIKTOK_REFRESH_TOKEN: ${{ secrets.TIKTOK_REFRESH_TOKEN }}
+      TIKTOK_POST_MODE: ${{ vars.TIKTOK_POST_MODE || 'MEDIA_UPLOAD' }}
+      # Instagram and Facebook are intentionally absent: publishing is TikTok-only
+      # for now. Add META_ACCESS_TOKEN / IG_USER_ID / FB_PAGE_ID /
+      # FB_PAGE_ACCESS_TOKEN here when turning those platforms on.
+      #
+      # Lets the run write the rotated TikTok refresh token back to Actions secrets
+      GH_PAT: ${{ secrets.GH_PAT }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        working-directory: recipe-social
+        run: pip install -r requirements.txt
+
+      - name: Install emoji font
+        # Slide badges and the caption use emoji. Without a colour emoji font
+        # Chromium renders them as empty boxes, which is invisible in logs and
+        # very visible in the published image.
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq fonts-noto-color-emoji
+
+      - name: Generate, render, and check
+        working-directory: recipe-social
+        run: |
+          python -m src.cli generate
+          python -m src.cli render
+          python -m src.cli gate
+
+      - name: Read gate result
+        id: gate
+        working-directory: recipe-social
+        run: |
+          HELD=$(python -c "
+          import json,pathlib,datetime
+          p=pathlib.Path('out')/datetime.date.today().isoformat()/'post.json'
+          print(str(json.loads(p.read_text())['held']).lower())")
+          echo "held=$HELD" >> "$GITHUB_OUTPUT"
+
+      - name: Report held post
+        if: steps.gate.outputs.held == 'true'
+        working-directory: recipe-social
+        run: |
+          python -c "
+          import json,pathlib,datetime,sys
+          sys.path.insert(0,'.')
+          from src import notify
+          d=datetime.date.today().isoformat()
+          post=json.loads((pathlib.Path('out')/d/'post.json').read_text())
+          notify.report_held(post['recipe']['title'], post['hold_reasons'], f'out/{d}')"
+
+      - name: Stage media
+        if: steps.gate.outputs.held == 'false' && !inputs.no_publish
+        working-directory: recipe-social
+        run: python -m src.cli stage
+
+      - name: Commit media and history
+        if: steps.gate.outputs.held == 'false' && !inputs.no_publish
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/media recipe-social/state
+          if git diff --staged --quiet; then
+            echo "Nothing to commit."
+          else
+            git commit -m "Publish recipe carousel for $(date -u +%F)"
+            git push
+          fi
+
+      - name: Wait for GitHub Pages to serve the slides
+        # TikTok pulls the images from these URLs; publishing before Pages has
+        # rebuilt hands it a 404 that only surfaces asynchronously.
+        if: steps.gate.outputs.held == 'false' && !inputs.no_publish
+        working-directory: recipe-social
+        run: python -m src.cli wait --timeout 420
+
+      - name: Publish
+        if: steps.gate.outputs.held == 'false' && !inputs.no_publish
+        working-directory: recipe-social
+        run: |
+          python -m src.cli publish \
+            ${{ inputs.dry_run && '--dry-run' || '' }} \
+            ${{ inputs.platforms && format('--platforms {0}', inputs.platforms) || '' }}
+
+      - name: Upload post assets
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: post-${{ github.run_id }}
+          path: recipe-social/out/
+          retention-days: 14
+          if-no-files-found: ignore

@@ -1,0 +1,56 @@
+name: Preflight (check setup)
+
+# Runs the same checks as `python -m src.cli doctor`, but inside Actions — which
+# is where the repository secrets actually live. Running doctor on a laptop only
+# proves the laptop is set up; this proves the environment the daily job runs in
+# is set up. Posts nothing.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  doctor:
+    runs-on: ubuntu-latest
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      PAGES_BASE_URL: ${{ vars.PAGES_BASE_URL }}
+      TIKTOK_CLIENT_KEY: ${{ secrets.TIKTOK_CLIENT_KEY }}
+      TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
+      TIKTOK_REFRESH_TOKEN: ${{ secrets.TIKTOK_REFRESH_TOKEN }}
+      TIKTOK_POST_MODE: ${{ vars.TIKTOK_POST_MODE || 'MEDIA_UPLOAD' }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        working-directory: recipe-social
+        run: pip install -r requirements.txt
+
+      - name: Doctor
+        working-directory: recipe-social
+        run: python -m src.cli doctor
+
+      - name: Render a sample carousel
+        # Proves Chromium, fonts, and the templates work on the runner without
+        # spending an image-generation call — the hero is a local placeholder.
+        if: always()
+        working-directory: recipe-social
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq fonts-noto-color-emoji
+          python -m pytest tests/test_schema_and_render.py -q
+
+      - name: Upload sample slides
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: preflight-slides
+          path: recipe-social/out/
+          retention-days: 7
+          if-no-files-found: ignore
