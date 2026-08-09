@@ -14,10 +14,10 @@ import anthropic
 from .. import config
 from .schema import Ingredient, Macros, Recipe
 
-MODEL = os.environ.get("RECIPE_MODEL", "claude-opus-5")
+MODEL = config.setting("RECIPE_MODEL", "claude-opus-5")
 # Recipe generation is a well-scoped structured task; medium is the cost/quality
 # sweet spot here. Raise to "high" if recipes start feeling generic.
-EFFORT = os.environ.get("RECIPE_EFFORT", "medium")
+EFFORT = config.setting("RECIPE_EFFORT", "medium")
 
 
 def _schema() -> dict[str, Any]:

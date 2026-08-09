@@ -20,6 +20,18 @@ DOCS_DIR = ROOT.parent / "docs"
 MEDIA_DIR = DOCS_DIR / "media"
 
 
+def setting(name: str, default: str) -> str:
+    """An environment override, treating empty as absent.
+
+    GitHub Actions renders an unset repository variable as the empty string
+    rather than leaving the variable unset, so os.environ.get(name, default)
+    hands back "" instead of the default — which for a model name is a 404 at
+    the far end of the run. Anything tunable by repository variable must come
+    through here.
+    """
+    return os.environ.get(name, "").strip() or default
+
+
 @functools.lru_cache(maxsize=None)
 def load(name: str) -> dict:
     """Load config/<name>.yaml. Cached — configs do not change mid-run."""

@@ -10,13 +10,22 @@ from __future__ import annotations
 
 import base64
 import json
-import os
 
 import anthropic
 
+from .. import config
 from ..recipes.schema import Recipe
 
-MODEL = os.environ.get("RECIPE_MODEL", "claude-opus-5")
+# Its own variable, not RECIPE_MODEL: this is a yes/no visual judgement, and
+# paying the recipe model's rate for it roughly doubled the cost of a post.
+MODEL = config.setting("IMAGE_CHECK_MODEL", "claude-haiku-4-5")
+
+# Haiku 4.5 rejects output_config.effort outright — sending it is a 400, not a
+# warning, so the whole run fails. Opt in by model rather than assuming support:
+# omitting effort only costs slightly more, while sending an unsupported one
+# breaks the job. Anything Haiku-family is excluded, so a future Haiku is safe
+# by default too.
+_EFFORT_UNSUPPORTED = ("claude-haiku-", "claude-sonnet-4-5")
 
 _SCHEMA = {
     "type": "object",
@@ -41,14 +50,22 @@ _SCHEMA = {
 }
 
 
+def output_config() -> dict:
+    """The output_config for the check, with effort only where it is accepted."""
+    settings: dict = {"format": {"type": "json_schema", "schema": _SCHEMA}}
+    if not MODEL.startswith(_EFFORT_UNSUPPORTED):
+        # A short visual judgement; deep reasoning adds cost without accuracy here.
+        settings["effort"] = "low"
+    return settings
+
+
 def check_hero(recipe: Recipe, image_bytes: bytes) -> list[str]:
     """Return hold reasons for the hero image. Empty means it passed."""
     client = anthropic.Anthropic()
     response = client.messages.create(
         model=MODEL,
         max_tokens=2000,
-        # A short visual judgement; deep reasoning adds cost without accuracy here.
-        output_config={"effort": "low", "format": {"type": "json_schema", "schema": _SCHEMA}},
+        output_config=_output_config(),
         messages=[
             {
                 "role": "user",

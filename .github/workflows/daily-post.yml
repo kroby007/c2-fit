@@ -40,6 +40,13 @@ jobs:
       # Generation
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      # Model selection. Each is optional — an unset repository variable arrives
+      # as an empty string, and config.setting() reads that as "use the default"
+      # so the job does not have to repeat the defaults here.
+      RECIPE_MODEL: ${{ vars.RECIPE_MODEL }}
+      RECIPE_EFFORT: ${{ vars.RECIPE_EFFORT }}
+      IMAGE_CHECK_MODEL: ${{ vars.IMAGE_CHECK_MODEL }}
+      GEMINI_IMAGE_MODEL: ${{ vars.GEMINI_IMAGE_MODEL }}
       # Media hosting — must equal the URL prefix verified with TikTok
       PAGES_BASE_URL: ${{ vars.PAGES_BASE_URL }}
       # TikTok

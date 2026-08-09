@@ -291,7 +291,7 @@ def _tiktok() -> list[Check]:
 
 
 def _post_mode() -> list[Check]:
-    mode = os.environ.get("TIKTOK_POST_MODE", "MEDIA_UPLOAD").upper()
+    mode = config.setting("TIKTOK_POST_MODE", "MEDIA_UPLOAD").upper()
     if mode == "MEDIA_UPLOAD":
         return [
             Check("Post mode", PASS, "MEDIA_UPLOAD — carousels land in your TikTok drafts",

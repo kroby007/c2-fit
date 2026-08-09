@@ -3,12 +3,13 @@ from __future__ import annotations
 
 import os
 
+from .. import config
 from .provider import ImageProvider
 
 # gemini-2.5-flash-image ("Nano Banana") is the cost/quality default at roughly
 # $0.03/image. gemini-3-pro-image is markedly better at fine detail and costs
 # more; switch with GEMINI_IMAGE_MODEL if the food shots need it.
-MODEL = os.environ.get("GEMINI_IMAGE_MODEL", "gemini-2.5-flash-image")
+MODEL = config.setting("GEMINI_IMAGE_MODEL", "gemini-2.5-flash-image")
 
 
 class GeminiProvider(ImageProvider):

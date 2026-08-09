@@ -125,10 +125,16 @@ Actions → Variables): `PAGES_BASE_URL` = that URL, no trailing slash.
 
 | Secret | Where to get it | Cost |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | <https://console.anthropic.com> | ~$0.01–0.03 per recipe |
-| `GEMINI_API_KEY` | <https://aistudio.google.com/apikey> | ~$0.03 per image |
+| `ANTHROPIC_API_KEY` | <https://console.anthropic.com> | ~$0.10–0.15 per post (recipe + photo check) |
+| `GEMINI_API_KEY` | <https://aistudio.google.com/apikey> | ~$0.04 per image |
 
-At one post a day that is **under ~$2/month** in total.
+At one post a day that is roughly **$4–6/month** — see
+[Where the money goes](#where-the-money-goes) for the breakdown and the levers
+that bring it down. Gemini image generation has **no free tier**; billing must be
+enabled on the Google Cloud project behind the key or every run fails with a 429.
+
+Neither of these is covered by a Claude Pro or Google One subscription — the APIs
+are metered separately from any consumer plan.
 
 ### 3. TikTok
 
@@ -247,6 +253,7 @@ one.
 | Variable | Default | Purpose |
 |---|---|---|
 | `MANUAL_MODE` | unset | `true` stops before TikTok and posts via `today.html`. No developer app needed |
+| `IMAGE_CHECK_MODEL` | `claude-haiku-4-5` | Model for the hero-photo sanity check. Separate from `RECIPE_MODEL` on purpose — see below |
 | `TIKTOK_POST_MODE` | `MEDIA_UPLOAD` | `DIRECT_POST` for fully automatic (post-audit) |
 | `TIKTOK_AUTO_ADD_MUSIC` | `true` | Let TikTok attach a trending sound (DIRECT_POST only) |
 | `IMAGE_PROVIDER` | `gemini` | Image backend |
@@ -254,6 +261,29 @@ one.
 | `RECIPE_MODEL` | `claude-opus-5` | Model for recipes and the image check |
 | `RECIPE_EFFORT` | `medium` | Raise to `high` if recipes feel generic |
 | `CHROME_BINARY` | auto-discovered | Explicit path to Chrome/Chromium |
+
+Every row above can be set as a **repository variable** and the workflows pass it
+through. Leaving one unset is the same as not setting it — an unset variable
+arrives as an empty string, and `config.setting()` reads blank as "use the
+default" rather than passing `""` down to an API call.
+
+### Where the money goes
+
+Roughly $0.14–0.19 a post at the defaults, split across three calls: the recipe
+(Claude), the hero photo (Gemini), and the photo sanity check (Claude).
+
+The check used to share `RECIPE_MODEL`, which meant a yes/no visual judgement —
+is this food, does it match the dish, is there text on it — cost about as much as
+writing the whole recipe. It now runs on Haiku 4.5 by default, five times
+cheaper, with no measurable loss on a question that simple.
+
+`output_config.effort` is **rejected outright by Haiku 4.5**, so the check sends
+it only to models that accept it. If you point `IMAGE_CHECK_MODEL` at another
+model that doesn't support effort, add it to `_EFFORT_UNSUPPORTED` in
+`src/images/verify.py` — otherwise every run fails at that call.
+
+To cut cost further, try `RECIPE_MODEL=claude-sonnet-5` and compare a day's
+slides against the current ones before keeping it.
 
 ---
 

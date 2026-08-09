@@ -14,6 +14,10 @@ jobs:
     env:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      RECIPE_MODEL: ${{ vars.RECIPE_MODEL }}
+      RECIPE_EFFORT: ${{ vars.RECIPE_EFFORT }}
+      IMAGE_CHECK_MODEL: ${{ vars.IMAGE_CHECK_MODEL }}
+      GEMINI_IMAGE_MODEL: ${{ vars.GEMINI_IMAGE_MODEL }}
       PAGES_BASE_URL: ${{ vars.PAGES_BASE_URL }}
       TIKTOK_CLIENT_KEY: ${{ secrets.TIKTOK_CLIENT_KEY }}
       TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}

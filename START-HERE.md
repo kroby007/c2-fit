@@ -46,10 +46,15 @@ Same page, **Secrets** tab:
 
 | Secret | Where | Cost |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | <https://console.anthropic.com> | ~$0.01–0.03 per recipe |
-| `GEMINI_API_KEY` | <https://aistudio.google.com/apikey> (free tier) | ~$0.03 per image |
+| `ANTHROPIC_API_KEY` | <https://console.anthropic.com> | ~$0.10–0.15 per post |
+| `GEMINI_API_KEY` | <https://aistudio.google.com/apikey> | ~$0.04 per image |
 
-Together: **under ~$2/month** at one post a day.
+Together: roughly **$4–6/month** at one post a day.
+
+**Gemini image generation has no free tier** — enable billing on the Google Cloud
+project behind the key, or every run fails with a quota error. Neither key is
+covered by a Claude Pro or Google One subscription; the APIs bill separately from
+any consumer plan.
 
 ## 4. Make your first post by hand
 

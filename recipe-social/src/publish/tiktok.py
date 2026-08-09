@@ -19,11 +19,11 @@ unverified prefix fails with url_ownership_unverified.
 """
 from __future__ import annotations
 
-import os
 import time
 
 import requests
 
+from .. import config
 from ..recipes.schema import Post
 from ..state import tokens
 from .base import PublishResult, Publisher
@@ -38,13 +38,13 @@ class TikTokPublisher(Publisher):
     name = "tiktok"
 
     def __init__(self) -> None:
-        self.post_mode = os.environ.get("TIKTOK_POST_MODE", "MEDIA_UPLOAD").upper()
+        self.post_mode = config.setting("TIKTOK_POST_MODE", "MEDIA_UPLOAD").upper()
         if self.post_mode not in ("MEDIA_UPLOAD", "DIRECT_POST"):
             raise ValueError(f"TIKTOK_POST_MODE must be MEDIA_UPLOAD or DIRECT_POST, got {self.post_mode!r}")
         # Only meaningful for DIRECT_POST; unaudited apps are forced to SELF_ONLY
         # regardless of what is requested here.
-        self.privacy_level = os.environ.get("TIKTOK_PRIVACY_LEVEL", "PUBLIC_TO_EVERYONE")
-        self.auto_add_music = os.environ.get("TIKTOK_AUTO_ADD_MUSIC", "true").lower() == "true"
+        self.privacy_level = config.setting("TIKTOK_PRIVACY_LEVEL", "PUBLIC_TO_EVERYONE")
+        self.auto_add_music = config.setting("TIKTOK_AUTO_ADD_MUSIC", "true").lower() == "true"
 
     def _payload(self, post: Post) -> dict:
         caption = post.full_caption
