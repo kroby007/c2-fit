@@ -16,6 +16,10 @@ writes finished slides and a caption to out/<date>/ for posting by hand.
 
 goes one better: it also stages the slides to the public site and writes the
 phone page, so posting by hand needs no file transfer and no TikTok app.
+
+Nothing generated is bought twice: generate and render reuse whatever a previous
+run left in out/<date>/, and `resume` re-dates a failed run's work onto today so
+that reuse can reach it.
 """
 from __future__ import annotations
 
@@ -49,6 +53,10 @@ def _post_path(date: str) -> pathlib.Path:
     return _post_dir(date) / "post.json"
 
 
+def _hero_path(date: str) -> pathlib.Path:
+    return _post_dir(date) / "hero.png"
+
+
 def _load(date: str) -> Post:
     path = _post_path(date)
     if not path.exists():
@@ -65,16 +73,108 @@ def cmd_generate(args: argparse.Namespace) -> None:
     from .state import queue
 
     date = args.date
+
+    # A run that dies after this stage has already paid for the recipe. Reusing
+    # it makes the pipeline resumable instead of billing for work that is sitting
+    # on disk; --regenerate forces a fresh one.
+    if _post_path(date).exists() and not args.regenerate:
+        post = _load(date)
+        print(f"Reusing the recipe already generated for {date}: {post.recipe.title}")
+        print("  (pass --regenerate to write a new one)")
+        return
+
     recipe = generate_recipe(exclude_titles=queue.recent_titles())
     post = Post(recipe=recipe, date=date)
     post.hashtags = compose.build_hashtags(recipe, recent=queue.recent_hashtags())
     post.caption = compose.build_caption(recipe)
 
+    # A hero image belongs to the recipe it was generated for. Writing a new
+    # recipe into this directory makes any photo already sitting there a photo of
+    # a different dish, so it goes now — otherwise the reuse in cmd_render would
+    # cheerfully pair the old plate with the new recipe.
+    _hero_path(date).unlink(missing_ok=True)
     post.save(_post_path(date))
     print(f"Generated: {recipe.title}")
     print(f"  {recipe.macros.protein_g}g protein · {recipe.total_minutes} min · "
           f"${recipe.cost_per_serving:.2f}/serving · badges: {', '.join(recipe.series) or 'none'}")
     print(f"  -> {_post_path(date)}")
+
+
+def _salvageable_dates(target: str) -> list[str]:
+    """Dated post directories other than the target, newest first."""
+    dates = []
+    for path in config.OUT_DIR.glob("*/post.json"):
+        name = path.parent.name
+        if name == target:
+            continue
+        try:
+            dt.date.fromisoformat(name)
+        except ValueError:
+            continue  # "held" and anything else that is not a date
+        dates.append(name)
+    return sorted(dates, reverse=True)
+
+
+def cmd_resume(args: argparse.Namespace) -> None:
+    """Adopt a previous date's generated work as today's post.
+
+    A run that died before publishing still paid for its recipe and its photo.
+    Both are dated, though, so a later run looks in a different directory and
+    buys them again. This copies them onto the target date, where the normal
+    pipeline finds them.
+
+    Only the two paid-for artifacts carry over. Caption and hashtags are rebuilt
+    against the current history — they cost nothing, and a week-old hashtag set
+    is exactly what the gate holds posts for. Slide paths, staged URLs, and any
+    hold reasons all describe the old date and are dropped.
+    """
+    from .state import queue
+
+    date = args.date
+    source = args.from_date
+    if not source:
+        candidates = _salvageable_dates(date)
+        if not candidates:
+            # A run that failed on this same date needs no re-dating: generate
+            # and render will find its work exactly where it already sits.
+            if _post_path(date).exists():
+                print(f"The salvaged post is already dated {date} — nothing to move.")
+                return
+            raise SystemExit(
+                f"Nothing to resume: no other dated post found under {config.OUT_DIR}.\n"
+                "Download a failed run's artifact into that directory first."
+            )
+        source = candidates[0]
+        if len(candidates) > 1:
+            print(f"Found {len(candidates)} salvageable posts; taking the newest.")
+
+    if source == date:
+        raise SystemExit(f"--from-date {source} is already the target date.")
+    if not _post_path(source).exists():
+        raise SystemExit(f"No post at {_post_path(source)}.")
+    if _post_path(date).exists():
+        raise SystemExit(
+            f"{_post_path(date)} already exists — resuming would overwrite it.\n"
+            f"Delete {_post_dir(date)} first if that is what you want."
+        )
+
+    old = Post.load(_post_path(source))
+    post = Post(recipe=old.recipe, date=date)
+    post.hashtags = compose.build_hashtags(post.recipe, recent=queue.recent_hashtags())
+    post.caption = compose.build_caption(post.recipe)
+
+    _post_dir(date).mkdir(parents=True, exist_ok=True)
+    hero = _hero_path(source)
+    if hero.exists():
+        # Copied rather than moved: the source is a salvage, and leaving it
+        # intact means a resume that goes wrong can simply be run again.
+        shutil.copy2(hero, _hero_path(date))
+    post.save(_post_path(date))
+
+    print(f"Resumed {source} as {date}: {post.recipe.title}")
+    print(f"  recipe   reused from {_post_path(source)}")
+    print(f"  hero.png {'reused' if hero.exists() else 'MISSING — will be generated'}")
+    print("  caption and hashtags rebuilt against the current history")
 
 
 def cmd_render(args: argparse.Namespace) -> None:
@@ -86,13 +186,24 @@ def cmd_render(args: argparse.Namespace) -> None:
     post = _load(date)
     out_dir = _post_dir(date)
 
-    provider = get_provider()
-    prompt = prompts.hero_prompt(post.recipe)
-    print(f"Generating hero image via {type(provider).__name__}...")
-    hero = provider.generate(prompt, prompts.aspect_ratio())
+    hero_path = _hero_path(date)
 
-    hero_path = out_dir / "hero.png"
-    hero_path.write_bytes(hero)
+    # The image is the single most expensive call in the run. If one is already
+    # on disk — a resumed run, or a retry after a later stage failed — reuse it
+    # rather than paying for a second one. cmd_generate deletes it whenever it
+    # writes a new recipe, so what is here always belongs to this post.
+    # --new-image forces a fresh photo.
+    if hero_path.exists() and not args.new_image:
+        hero = hero_path.read_bytes()
+        print(f"Reusing the hero image already generated for {date} ({len(hero):,} bytes)")
+        print("  (pass --new-image to generate a new one)")
+    else:
+        provider = get_provider()
+        prompt = prompts.hero_prompt(post.recipe)
+        print(f"Generating hero image via {type(provider).__name__}...")
+        hero = provider.generate(prompt, prompts.aspect_ratio())
+        hero_path.write_bytes(hero)
+
     post.hero_image_path = str(hero_path)
 
     if args.check_image:
@@ -290,6 +401,13 @@ def cmd_run(args: argparse.Namespace) -> None:
         print(f"Already posted on {date}. Pass --force to post again.")
         return
 
+    # --force means "post again today", so it has to mean a different post:
+    # reusing the recipe still on disk would republish the one that just went
+    # out. Resuming a failed run is the other reason out/<date>/ is populated,
+    # and that never reaches the queue, so it keeps the cheap path.
+    if args.force:
+        args.regenerate = True
+
     cmd_generate(args)
     cmd_render(args)
     cmd_gate(args)
@@ -340,9 +458,30 @@ def main(argv: list[str] | None = None) -> None:
         p.set_defaults(func=func)
         return p
 
+    # Both stages reuse whatever a previous run left in out/<date>/ rather than
+    # paying for it twice, so both need a way to say "no, buy me a new one".
+    def add_regenerate(p):
+        p.add_argument(
+            "--regenerate", action="store_true",
+            help="Write a new recipe even if out/<date>/post.json already has one. "
+                 "Also discards the hero image, which belonged to the old recipe.",
+        )
+
+    def add_new_image(p):
+        p.add_argument(
+            "--new-image", action="store_true",
+            help="Generate a new hero image even if out/<date>/hero.png exists.",
+        )
+
     add("doctor", cmd_doctor, "Check the setup end to end without posting anything.")
 
-    add("generate", cmd_generate, "Generate a recipe, caption, and hashtags.")
+    add_regenerate(add("generate", cmd_generate, "Generate a recipe, caption, and hashtags."))
+
+    resume = add("resume", cmd_resume, "Adopt a failed run's recipe and photo as today's post.")
+    resume.add_argument(
+        "--from-date", default="",
+        help="Date to salvage (YYYY-MM-DD). Defaults to the newest other post in out/.",
+    )
 
     render = add("render", cmd_render, "Generate the hero image and render the slides.")
     render.add_argument(
@@ -350,6 +489,7 @@ def main(argv: list[str] | None = None) -> None:
         help="Skip the vision sanity check on the hero image.",
     )
     render.set_defaults(check_image=True)
+    add_new_image(render)
 
     add("stage", cmd_stage, "Copy slides to the public media directory and record their URLs.")
 
@@ -387,6 +527,8 @@ def main(argv: list[str] | None = None) -> None:
     )
     run.add_argument("--no-check-image", dest="check_image", action="store_false")
     run.set_defaults(check_image=True)
+    add_regenerate(run)
+    add_new_image(run)
 
     args = parser.parse_args(argv)
     args.func(args)

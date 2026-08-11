@@ -226,9 +226,52 @@ python -m src.cli run                 # the whole chain
 python -m src.cli run --manual       # build + stage, post from today.html by hand
 python -m src.cli run --no-publish    # Phase 0: build assets only, touch nothing public
 
+python -m src.cli resume              # adopt a failed run's recipe + photo
 python -m src.cli --date 2026-07-26 render   # re-run one stage
 python -m pytest tests/ -q
 ```
+
+---
+
+## When a run fails, don't pay for it twice
+
+The two calls that cost money — writing the recipe and generating the photo —
+happen at the start of a run. Anything that goes wrong after them (a bad gateway
+from the image host, a crash in a later stage) used to throw that money away,
+because the next run generated everything from scratch.
+
+It doesn't now. `generate` and `render` each reuse what is already sitting in
+`out/<date>/` and only call the API when there is nothing there:
+
+```
+Reusing the recipe already generated for 2026-08-11: Chipotle Chicken Burrito Bowl
+Reusing the hero image already generated for 2026-08-11 (1,804,585 bytes)
+```
+
+So re-running a failed day locally costs nothing. Use `--regenerate` or
+`--new-image` when you want a fresh one anyway.
+
+### Salvaging a failed run on GitHub
+
+Every run uploads `out/` as an artifact, kept for 14 days, so a failed run's
+recipe and photo survive it. To reuse them:
+
+1. Open the failed run and copy its **run ID** — the last number in the URL,
+   e.g. `.../actions/runs/31512123594`.
+2. Actions → **Daily recipe post** → **Run workflow**.
+3. Paste the ID into **`resume_from_run`**, tick **`manual`**, run it.
+
+The run downloads that artifact, re-dates it onto today, and carries on from
+there. The log will say `Reusing the recipe...` where it would normally say
+`Generated:`.
+
+Caption and hashtags are rebuilt rather than carried over — they cost nothing and
+a stale hashtag set is one of the things the quality gate holds posts for. The
+recipe and the photo, the two things you paid for, are what actually transfer.
+
+> A new recipe always discards the photo beside it. The photo is *of* a specific
+> dish, so pairing it with a different recipe would produce slides showing the
+> wrong food — with every check still passing.
 
 ---
 
@@ -388,3 +431,9 @@ silently do nothing useful in PowerShell.
 
 **Publishing 404s on the images** — Pages hadn't rebuilt yet. The `wait` stage
 exists for this; if it times out, confirm Pages is building from `/docs`.
+
+**A run failed partway — do I pay for it again?** No. Re-run it with
+`resume_from_run` set to the failed run's ID and it reuses the recipe and photo
+that run already generated. See
+[When a run fails](#when-a-run-fails-dont-pay-for-it-twice). Artifacts expire
+after 14 days, so salvage within two weeks.

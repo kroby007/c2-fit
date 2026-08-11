@@ -63,6 +63,11 @@ def wired(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch):
     """Redirect all writable paths into tmp and stub the two credentialed calls."""
     monkeypatch.setattr(config, "OUT_DIR", tmp_path / "out")
     monkeypatch.setattr(config, "STATE_DIR", tmp_path / "state")
+    # DOCS_DIR as well as MEDIA_DIR: today.html is written straight into docs/,
+    # and it is a live file — the page the phone opens every morning. A test run
+    # that forgets this quietly replaces the real post with fixture data, and the
+    # damage only shows up on the published site.
+    monkeypatch.setattr(config, "DOCS_DIR", tmp_path / "docs")
     monkeypatch.setattr(config, "MEDIA_DIR", tmp_path / "docs" / "media")
     monkeypatch.setenv("PAGES_BASE_URL", "https://example.github.io/c2-fit")
 
@@ -288,6 +293,198 @@ def test_held_post_page_warns_before_it_is_posted(wired: pathlib.Path) -> None:
     page = handoff.render_page(held, ["https://example.github.io/c2-fit/media/x/s1.png"])
     assert "held this post" in page
     assert "macros do not add up" in page
+
+
+# --------------------------------------------------------------------------- #
+# resuming a failed run
+#
+# Both generation calls cost real money, and a run that dies late — a bad
+# gateway from the image host, a crash in a later stage — has already paid for
+# whatever reached out/<date>/. These lock in that a re-run spends nothing on
+# work already on disk, and that reuse never outlives the recipe it belongs to.
+# --------------------------------------------------------------------------- #
+
+@pytest.fixture
+def counted(wired: pathlib.Path, monkeypatch: pytest.MonkeyPatch):
+    """Count what a run actually pays for: recipes written, images generated."""
+    calls = {"recipe": 0, "image": 0}
+    titles = iter(["First Dish", "Second Dish", "Third Dish"])
+
+    def counting_generate(exclude_titles=None):
+        calls["recipe"] += 1
+        recipe = Recipe.from_dict(json.loads((FIXTURES / "recipe_good.json").read_text()))
+        recipe.title = next(titles)
+        return recipe
+
+    stub = _StubImageProvider()
+    real_generate = stub.generate
+
+    def counting_image(prompt: str, aspect_ratio: str) -> bytes:
+        calls["image"] += 1
+        return real_generate(prompt, aspect_ratio)
+
+    monkeypatch.setattr(stub, "generate", counting_image)
+    monkeypatch.setattr("src.recipes.generate.generate_recipe", counting_generate)
+    monkeypatch.setattr("src.images.provider.get_provider", lambda name=None: stub)
+    return calls
+
+
+def test_rerunning_generate_reuses_the_recipe_on_disk(counted: dict) -> None:
+    _run("generate")
+    _run("generate")
+    assert counted["recipe"] == 1, "the second generate must not pay for a new recipe"
+    assert Post.load(config.OUT_DIR / DATE / "post.json").recipe.title == "First Dish"
+
+
+def test_regenerate_overrides_the_reuse(counted: dict) -> None:
+    _run("generate")
+    _run("generate", "--regenerate")
+    assert counted["recipe"] == 2
+    assert Post.load(config.OUT_DIR / DATE / "post.json").recipe.title == "Second Dish"
+
+
+def test_rerunning_render_reuses_the_hero_image(counted: dict) -> None:
+    _run("generate")
+    _run("render", "--no-check-image")
+    _run("render", "--no-check-image")
+    assert counted["image"] == 1, "the second render must not pay for a new image"
+
+
+def test_new_image_overrides_the_reuse(counted: dict) -> None:
+    _run("generate")
+    _run("render", "--no-check-image")
+    _run("render", "--no-check-image", "--new-image")
+    assert counted["image"] == 2
+
+
+def test_a_resumed_run_costs_nothing_it_already_paid_for(counted: dict) -> None:
+    """The case this exists for: a run died after the image, before publishing.
+
+    Re-running it must reach the same finished slides on one recipe and one
+    photo — the money is already spent, and the artifacts are right there.
+    """
+    _run("generate")
+    _run("render", "--no-check-image")  # stands in for the run that then died
+
+    _run("run", "--manual", "--no-check-image")
+
+    assert counted == {"recipe": 1, "image": 1}
+    post = Post.load(config.OUT_DIR / DATE / "post.json")
+    assert post.recipe.title == "First Dish"
+    assert len(post.slide_urls) == 3
+
+
+def test_a_regenerated_recipe_never_inherits_the_old_photo(counted: dict) -> None:
+    """The trap in reusing by filename: hero.png is a photo of a specific dish.
+
+    Without invalidation the pipeline would pair the new recipe with the old
+    plate, and every downstream check would pass — the slides would simply show
+    the wrong food.
+    """
+    _run("generate")
+    _run("render", "--no-check-image")
+    assert (config.OUT_DIR / DATE / "hero.png").exists()
+
+    _run("generate", "--regenerate")
+    assert not (config.OUT_DIR / DATE / "hero.png").exists(), \
+        "the old recipe's photo must not survive a new recipe"
+
+    _run("render", "--no-check-image")
+    assert counted["image"] == 2, "the new recipe must get its own photo"
+
+
+def test_force_posts_something_new_rather_than_the_last_recipe(counted: dict) -> None:
+    """--force means 'post again today', which has to mean a different post."""
+    from src.state import queue
+
+    _run("run", "--manual", "--no-check-image")
+    queue.record(DATE, "first-dish", "First Dish", ["#foodtok"])
+
+    _run("run", "--manual", "--no-check-image", "--force")
+
+    assert counted["recipe"] == 2, "--force must not republish the recipe already out"
+    assert counted["image"] == 2, "and it must not reuse the previous dish's photo"
+    assert Post.load(config.OUT_DIR / DATE / "post.json").recipe.title == "Second Dish"
+
+
+def test_resume_adopts_a_previous_dates_work(counted: dict) -> None:
+    """The Aug 10 case: the run died, and the salvage happens on a later day."""
+    cli.main(["--date", "2026-07-25", "generate"])
+    cli.main(["--date", "2026-07-25", "render", "--no-check-image"])
+
+    _run("resume")                       # --from-date auto-detected
+    _run("run", "--manual", "--no-check-image")
+
+    assert counted == {"recipe": 1, "image": 1}, "a resumed day must buy nothing twice"
+
+    post = Post.load(config.OUT_DIR / DATE / "post.json")
+    assert post.recipe.title == "First Dish"
+    assert post.date == DATE, "the adopted post must carry the new date"
+    assert len(post.slide_urls) == 3
+    for url in post.slide_urls:
+        assert DATE in url and "2026-07-25" not in url, "URLs must not point at the old date"
+
+
+def test_resume_drops_state_that_described_the_old_date(counted: dict) -> None:
+    """Everything downstream of the recipe is about a day that is not this one."""
+    cli.main(["--date", "2026-07-25", "generate"])
+    cli.main(["--date", "2026-07-25", "render", "--no-check-image"])
+    cli.main(["--date", "2026-07-25", "stage"])
+
+    stale = Post.load(config.OUT_DIR / "2026-07-25" / "post.json")
+    stale.held = True
+    stale.hold_reasons = ["some problem from that day"]
+    stale.save(config.OUT_DIR / "2026-07-25" / "post.json")
+    assert stale.slide_urls, "the old post must really carry URLs for this to prove anything"
+
+    _run("resume")
+
+    post = Post.load(config.OUT_DIR / DATE / "post.json")
+    assert post.slide_paths == [] and post.slide_urls == []
+    assert post.published == {}
+    assert not post.held and post.hold_reasons == [], "the gate must judge this run afresh"
+    assert post.caption and post.hashtags, "caption and hashtags are rebuilt, not dropped"
+
+
+def test_resume_refuses_to_overwrite_work_already_here(counted: dict) -> None:
+    cli.main(["--date", "2026-07-25", "generate"])
+    _run("generate")
+
+    with pytest.raises(SystemExit, match="already exists"):
+        _run("resume")
+    assert Post.load(config.OUT_DIR / DATE / "post.json").recipe.title == "Second Dish"
+
+
+def test_resume_is_a_no_op_when_the_salvage_is_already_todays_date(
+    counted: dict, capsys: pytest.CaptureFixture
+) -> None:
+    """A run that failed the same day it was meant to post needs no re-dating.
+
+    The workflow runs `resume` unconditionally when given a run ID, so this path
+    has to succeed rather than fail the job for having nothing to move.
+    """
+    _run("generate")
+    _run("render", "--no-check-image")
+
+    _run("resume")
+    assert "nothing to move" in capsys.readouterr().out
+
+    _run("run", "--manual", "--no-check-image")
+    assert counted == {"recipe": 1, "image": 1}
+
+
+def test_resume_says_so_when_there_is_nothing_to_salvage(counted: dict) -> None:
+    with pytest.raises(SystemExit, match="Nothing to resume"):
+        _run("resume")
+
+
+def test_resume_ignores_the_held_directory(counted: dict) -> None:
+    """out/held/ sits beside the dated folders and is not a date."""
+    (config.OUT_DIR / "held").mkdir(parents=True)
+    (config.OUT_DIR / "held" / "post.json").write_text("{}")
+
+    with pytest.raises(SystemExit, match="Nothing to resume"):
+        _run("resume")
 
 
 @pytest.mark.parametrize(

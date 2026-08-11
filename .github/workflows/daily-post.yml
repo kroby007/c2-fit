@@ -24,6 +24,10 @@ on:
         description: "platforms — comma-separated subset, e.g. tiktok,instagram. Leave blank for TikTok only (the default)."
         type: string
         default: ""
+      resume_from_run:
+        description: "resume_from_run — salvage a failed run instead of paying for a new recipe and photo. Paste that run's ID (the last number in its URL). Assets expire after 14 days."
+        type: string
+        default: ""
 
 concurrency:
   # Two runs publishing the same day would double-post.
@@ -36,6 +40,7 @@ jobs:
     permissions:
       contents: write   # commit the staged media and the posting history
       issues: write     # open an issue when the quality gate holds a post
+      actions: read     # read a previous run's artifacts when resuming one
     env:
       # Generation
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -91,6 +96,25 @@ jobs:
         # Chromium renders them as empty boxes, which is invisible in logs and
         # very visible in the published image.
         run: sudo apt-get update -qq && sudo apt-get install -y -qq fonts-noto-color-emoji
+
+      - name: Recover a failed run's assets
+        # Both generation calls cost money, and a run that died late had already
+        # paid for them. Pulling its artifact back in lets today's run adopt the
+        # recipe and the photo instead of buying them again.
+        if: inputs.resume_from_run != ''
+        uses: actions/download-artifact@v4
+        with:
+          name: post-${{ inputs.resume_from_run }}
+          run-id: ${{ inputs.resume_from_run }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: recipe-social/out
+
+      - name: Adopt them as today's post
+        # Re-dates the salvaged work onto this run. Without it the pipeline looks
+        # under today's date, finds nothing, and pays for everything again.
+        if: inputs.resume_from_run != ''
+        working-directory: recipe-social
+        run: python -m src.cli resume
 
       - name: Generate, render, and check
         working-directory: recipe-social
