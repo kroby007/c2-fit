@@ -1,1 +1,65 @@
-[]
+[
+  {
+    "date": "2026-08-08",
+    "slug": "chicken-black-bean-rice-skillet",
+    "title": "Chicken, Black Bean & Rice Skillet",
+    "method": "skillet",
+    "hashtags": [
+      "#easyrecipes",
+      "#foodtok",
+      "#mealprep",
+      "#cookingtiktok",
+      "#dinnerideas",
+      "#gymfood",
+      "#cheapeats",
+      "#macrofriendly",
+      "#simplemeals",
+      "#proteindinner",
+      "#nofussdinner"
+    ],
+    "published": {},
+    "held": false
+  },
+  {
+    "date": "2026-08-09",
+    "slug": "chipotle-chicken-burrito-bowl-skillet",
+    "title": "Chipotle Chicken Burrito Bowl Skillet",
+    "method": "skillet",
+    "hashtags": [
+      "#recipe",
+      "#foodtok",
+      "#easydinner",
+      "#quickmeals",
+      "#healthyrecipes",
+      "#bulkingmeals",
+      "#proteinpacked",
+      "#cheapmeals",
+      "#simplemeals",
+      "#nofussdinner",
+      "#macrotracking"
+    ],
+    "published": {},
+    "held": false
+  },
+  {
+    "date": "2026-08-11",
+    "slug": "chipotle-chicken-black-bean-skillet",
+    "title": "Chipotle Chicken & Black Bean Skillet",
+    "method": "skillet",
+    "hashtags": [
+      "#foodtok",
+      "#food",
+      "#highprotein",
+      "#dinnerideas",
+      "#cookingtiktok",
+      "#groceryhaul",
+      "#cheapeats",
+      "#fitnessfood",
+      "#proteindinner",
+      "#weeklymealplan",
+      "#macrotracking"
+    ],
+    "published": {},
+    "held": false
+  }
+]

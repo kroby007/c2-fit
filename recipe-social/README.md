@@ -345,6 +345,31 @@ main argument for the retry in `src/images/gemini.py`.
 
 ---
 
+## How the feed stays varied
+
+`state/history.json` is the memory. Every finished post is appended to it and
+committed, because GitHub runners are wiped between runs — history that isn't
+committed doesn't survive to tomorrow. Four things read it:
+
+| Reads | Effect |
+|---|---|
+| `recent_titles()` | Recent titles go into the prompt as "do not create anything similar" |
+| `recent_methods()` | The last 2 cooking methods are **removed from the JSON schema**, so the model cannot return them |
+| `recent_hashtags()` | Rotates the tag selection away from the last 5 posts |
+| `already_posted_today()` | Stops a re-run double-posting |
+
+Method rotation is enforced in the schema rather than asked for in the prompt.
+A prompt instruction can be ignored; a value that isn't in the enum cannot be
+returned at all. With five methods in `niche.yaml` and two excluded, there are
+always at least three to choose from — and if you shorten that list, the
+exclusion yields rather than leaving an empty enum and a failed run.
+
+> **The first three posts were all skillets**, and nearly the same dish each
+> time. `queue.record()` was only ever called by the publish stage, so running in
+> manual mode left `history.json` permanently empty — and every mechanism above
+> reads that file. The generator saw no recent titles, the gate had nothing to
+> compare against, and nothing tracked methods at all. Manual mode records now.
+
 ## The quality gate
 
 Runs before anything publishes. It **corrects** what it can and **holds** what it

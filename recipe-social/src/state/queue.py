@@ -18,6 +18,10 @@ HISTORY_PATH = config.STATE_DIR / "history.json"
 # enough that the hashtag pools do not exhaust themselves.
 DEDUPE_WINDOW = 60
 HASHTAG_WINDOW = 5
+# How many recent cooking methods to rule out. niche.yaml lists five, so two
+# still leaves three to choose from — enough that the model is not boxed into a
+# bad fit, tight enough that the feed cannot become all one appliance.
+METHOD_WINDOW = 2
 
 
 def _load() -> list[dict[str, Any]]:
@@ -37,6 +41,16 @@ def recent_hashtags(limit: int = HASHTAG_WINDOW) -> list[str]:
     return tags
 
 
+def recent_methods(limit: int = METHOD_WINDOW) -> list[str]:
+    """Cooking methods used most recently, for the generator to avoid.
+
+    Held posts count: the method was still spent on that day's slot as far as
+    variety goes, and the point here is what the feed looks like, not what
+    published.
+    """
+    return [m for e in _load()[-limit:] if (m := e.get("method"))]
+
+
 def record(
     date: str,
     slug: str,
@@ -44,6 +58,7 @@ def record(
     hashtags: list[str],
     published: dict[str, Any] | None = None,
     held: bool = False,
+    method: str = "",
 ) -> None:
     """Append one post to the history file."""
     entries = _load()
@@ -52,6 +67,7 @@ def record(
             "date": date,
             "slug": slug,
             "title": title,
+            "method": method,
             "hashtags": hashtags,
             "published": published or {},
             "held": held,

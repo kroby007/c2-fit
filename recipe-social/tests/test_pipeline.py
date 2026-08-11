@@ -75,7 +75,7 @@ def wired(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch):
 
     monkeypatch.setattr(queue, "HISTORY_PATH", tmp_path / "state" / "history.json")
 
-    def fake_generate(exclude_titles=None):
+    def fake_generate(exclude_titles=None, exclude_methods=None):
         return Recipe.from_dict(json.loads((FIXTURES / "recipe_good.json").read_text()))
 
     monkeypatch.setattr("src.recipes.generate.generate_recipe", fake_generate)
@@ -119,7 +119,7 @@ def test_stage_produces_verified_prefix_urls(wired: pathlib.Path) -> None:
 def test_bad_recipe_is_held_and_never_published(
     wired: pathlib.Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
 ) -> None:
-    def bad_generate(exclude_titles=None):
+    def bad_generate(exclude_titles=None, exclude_methods=None):
         return Recipe.from_dict(json.loads((FIXTURES / "recipe_bad_macros.json").read_text()))
 
     monkeypatch.setattr("src.recipes.generate.generate_recipe", bad_generate)
@@ -267,6 +267,35 @@ def test_manual_run_sends_nothing_and_records_nothing(
     assert post.published == {}
 
 
+def test_manual_run_records_the_post_in_the_history(wired: pathlib.Path) -> None:
+    """Manual mode used to return before the only call that wrote the history.
+
+    Nothing was sent anywhere, so it did not look like a post — but it went on
+    the phone page and got posted by hand, and the next day's generator has to
+    know that. Leaving it out is what produced three skillets in a row.
+    """
+    from src.state import queue
+
+    _run("run", "--manual", "--no-check-image")
+
+    post = Post.load(config.OUT_DIR / DATE / "post.json")
+    assert queue.recent_titles() == [post.recipe.title]
+    assert queue.recent_methods() == [post.recipe.method]
+    assert queue.recent_hashtags() == post.hashtags
+    assert queue.already_posted_today(DATE), "a manual post must block a second run"
+
+
+def test_a_manual_run_tells_the_next_one_what_to_avoid(counted: dict) -> None:
+    """The recorded method has to actually reach the next generate call."""
+    _run("run", "--manual", "--no-check-image")
+    assert counted["exclude_methods"] == [], "nothing to avoid on the first run"
+
+    cli.main(["--date", "2026-07-27", "run", "--manual", "--no-check-image"])
+
+    post = Post.load(config.OUT_DIR / DATE / "post.json")
+    assert counted["exclude_methods"] == [post.recipe.method]
+
+
 def test_manual_mode_env_var_matches_the_flag(
     wired: pathlib.Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -304,13 +333,19 @@ def test_held_post_page_warns_before_it_is_posted(wired: pathlib.Path) -> None:
 # work already on disk, and that reuse never outlives the recipe it belongs to.
 # --------------------------------------------------------------------------- #
 
+def _spend(counted: dict) -> dict:
+    """Only the two counts that cost money, ignoring whatever else was captured."""
+    return {"recipe": counted["recipe"], "image": counted["image"]}
+
+
 @pytest.fixture
 def counted(wired: pathlib.Path, monkeypatch: pytest.MonkeyPatch):
     """Count what a run actually pays for: recipes written, images generated."""
-    calls = {"recipe": 0, "image": 0}
+    calls = {"recipe": 0, "image": 0, "exclude_methods": []}
     titles = iter(["First Dish", "Second Dish", "Third Dish"])
 
-    def counting_generate(exclude_titles=None):
+    def counting_generate(exclude_titles=None, exclude_methods=None):
+        calls["exclude_methods"] = list(exclude_methods or [])
         calls["recipe"] += 1
         recipe = Recipe.from_dict(json.loads((FIXTURES / "recipe_good.json").read_text()))
         recipe.title = next(titles)
@@ -368,7 +403,7 @@ def test_a_resumed_run_costs_nothing_it_already_paid_for(counted: dict) -> None:
 
     _run("run", "--manual", "--no-check-image")
 
-    assert counted == {"recipe": 1, "image": 1}
+    assert _spend(counted) == {"recipe": 1, "image": 1}
     post = Post.load(config.OUT_DIR / DATE / "post.json")
     assert post.recipe.title == "First Dish"
     assert len(post.slide_urls) == 3
@@ -415,7 +450,7 @@ def test_resume_adopts_a_previous_dates_work(counted: dict) -> None:
     _run("resume")                       # --from-date auto-detected
     _run("run", "--manual", "--no-check-image")
 
-    assert counted == {"recipe": 1, "image": 1}, "a resumed day must buy nothing twice"
+    assert _spend(counted) == {"recipe": 1, "image": 1}, "a resumed day must buy nothing twice"
 
     post = Post.load(config.OUT_DIR / DATE / "post.json")
     assert post.recipe.title == "First Dish"
@@ -470,7 +505,7 @@ def test_resume_is_a_no_op_when_the_salvage_is_already_todays_date(
     assert "nothing to move" in capsys.readouterr().out
 
     _run("run", "--manual", "--no-check-image")
-    assert counted == {"recipe": 1, "image": 1}
+    assert _spend(counted) == {"recipe": 1, "image": 1}
 
 
 def test_resume_says_so_when_there_is_nothing_to_salvage(counted: dict) -> None:

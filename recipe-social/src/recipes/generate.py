@@ -22,7 +22,23 @@ MODEL = config.setting("RECIPE_MODEL", "claude-sonnet-5")
 EFFORT = config.setting("RECIPE_EFFORT", "high")
 
 
-def _schema() -> dict[str, Any]:
+def available_methods(exclude: list[str] | None = None) -> list[str]:
+    """Cooking methods the next recipe may use.
+
+    Recent methods are removed from the enum rather than merely discouraged in
+    the prompt, because structured output cannot return a value the schema does
+    not offer. Asking for variety is advisory; this is not.
+
+    The exclusion yields if it would leave too little to choose from, so a short
+    methods list in niche.yaml degrades to a wider choice instead of an empty
+    enum and a failed run.
+    """
+    methods = list(config.niche()["methods"])
+    remaining = [m for m in methods if m not in set(exclude or ())]
+    return remaining if len(remaining) >= 2 else methods
+
+
+def _schema(exclude_methods: list[str] | None = None) -> dict[str, Any]:
     """Build the JSON schema from config so methods and series stay in sync.
 
     Numeric bounds are deliberately absent — the structured-output schema does
@@ -50,7 +66,7 @@ def _schema() -> dict[str, Any]:
                     "E.g. '42g protein for $2.80'. No emoji — the card supplies those."
                 ),
             },
-            "method": {"type": "string", "enum": list(niche["methods"])},
+            "method": {"type": "string", "enum": available_methods(exclude_methods)},
             "servings": {"type": "integer"},
             "prep_minutes": {"type": "integer"},
             "cook_minutes": {"type": "integer"},
@@ -113,7 +129,7 @@ def _schema() -> dict[str, Any]:
     }
 
 
-def _prompt(exclude_titles: list[str]) -> str:
+def _prompt(exclude_titles: list[str], exclude_methods: list[str] | None = None) -> str:
     niche = config.niche()
     brand = config.brand()
     c = niche["constraints"]
@@ -130,6 +146,15 @@ def _prompt(exclude_titles: list[str]) -> str:
         if exclude_titles
         else ""
     )
+    # The schema already withholds these, so this only explains why the usual
+    # choice is missing — otherwise the model works around the gap by writing a
+    # skillet recipe and labelling it one_pot.
+    if exclude_methods:
+        recent += (
+            "\n\nThe last posts used " + ", ".join(exclude_methods) + ". Pick a "
+            "genuinely different way of cooking, not the same technique renamed — "
+            "the feed should not look like one appliance."
+        )
 
     return f"""Create one recipe for a short-form video account.
 
@@ -160,17 +185,22 @@ protein, carbs, and fat at 4/4/9 kcal per gram. A recipe with plausible-looking 
 internally inconsistent numbers is worse than a simpler recipe with honest ones.{recent}"""
 
 
-def generate_recipe(exclude_titles: list[str] | None = None) -> Recipe:
-    """Generate one recipe matching the niche brief, avoiding recent titles."""
+def generate_recipe(
+    exclude_titles: list[str] | None = None,
+    exclude_methods: list[str] | None = None,
+) -> Recipe:
+    """Generate one recipe matching the niche brief, avoiding recent work."""
     client = anthropic.Anthropic()
     response = client.messages.create(
         model=MODEL,
         max_tokens=16000,
         output_config={
             "effort": EFFORT,
-            "format": {"type": "json_schema", "schema": _schema()},
+            "format": {"type": "json_schema", "schema": _schema(exclude_methods)},
         },
-        messages=[{"role": "user", "content": _prompt(exclude_titles or [])}],
+        messages=[
+            {"role": "user", "content": _prompt(exclude_titles or [], exclude_methods)}
+        ],
     )
 
     if response.stop_reason == "refusal":

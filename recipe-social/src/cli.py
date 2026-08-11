@@ -83,7 +83,10 @@ def cmd_generate(args: argparse.Namespace) -> None:
         print("  (pass --regenerate to write a new one)")
         return
 
-    recipe = generate_recipe(exclude_titles=queue.recent_titles())
+    recipe = generate_recipe(
+        exclude_titles=queue.recent_titles(),
+        exclude_methods=queue.recent_methods(),
+    )
     post = Post(recipe=recipe, date=date)
     post.hashtags = compose.build_hashtags(recipe, recent=queue.recent_hashtags())
     post.caption = compose.build_caption(recipe)
@@ -377,7 +380,8 @@ def cmd_publish(args: argparse.Namespace) -> None:
     post.save(_post_path(date))
 
     if not args.dry_run:
-        queue.record(date, post.recipe.slug, post.recipe.title, post.hashtags, post.published)
+        queue.record(date, post.recipe.slug, post.recipe.title, post.hashtags,
+                     post.published, method=post.recipe.method)
 
     if any_failed:
         sys.exit(1)
@@ -420,7 +424,8 @@ def cmd_run(args: argparse.Namespace) -> None:
             shutil.rmtree(held_dir)
         shutil.move(str(_post_dir(date)), str(held_dir))
         notify.report_held(post.recipe.title, post.hold_reasons, str(held_dir))
-        queue.record(date, post.recipe.slug, post.recipe.title, post.hashtags, held=True)
+        queue.record(date, post.recipe.slug, post.recipe.title, post.hashtags,
+                     held=True, method=post.recipe.method)
         # A held post is the gate doing its job, not a pipeline failure.
         return
 
@@ -437,6 +442,15 @@ def cmd_run(args: argparse.Namespace) -> None:
     # the public site and written the phone page, which is everything posting by
     # hand needs — and unlike publishing, it requires no TikTok app at all.
     if args.manual or _manual_mode_set():
+        # Recorded even though nothing was sent anywhere. The history is what
+        # stops the generator repeating itself, and it only ever got written by
+        # the publish stage — so running in manual mode left it permanently
+        # empty, and every run wrote its recipe with no idea what came before.
+        # That is why the first posts were all skillets.
+        queue.record(
+            date, post.recipe.slug, post.recipe.title, post.hashtags,
+            method=post.recipe.method,
+        )
         print(
             "\nManual mode: nothing was sent to TikTok. Commit and push docs/, "
             "then open the phone page above and post it yourself."
