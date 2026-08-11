@@ -65,7 +65,7 @@ def check_hero(recipe: Recipe, image_bytes: bytes) -> list[str]:
     response = client.messages.create(
         model=MODEL,
         max_tokens=2000,
-        output_config=_output_config(),
+        output_config=output_config(),
         messages=[
             {
                 "role": "user",
