@@ -14,10 +14,12 @@ import anthropic
 from .. import config
 from .schema import Ingredient, Macros, Recipe
 
-MODEL = config.setting("RECIPE_MODEL", "claude-opus-5")
-# Recipe generation is a well-scoped structured task; medium is the cost/quality
-# sweet spot here. Raise to "high" if recipes start feeling generic.
-EFFORT = config.setting("RECIPE_EFFORT", "medium")
+# Recipe writing is a well-scoped structured task well inside Sonnet's range,
+# and output tokens dominate the bill, so the tier matters more than anything
+# else here. High effort rather than medium: it buys back most of what dropping
+# from Opus costs, and this is the one call whose quality shows up on the slides.
+MODEL = config.setting("RECIPE_MODEL", "claude-sonnet-5")
+EFFORT = config.setting("RECIPE_EFFORT", "high")
 
 
 def _schema() -> dict[str, Any]:

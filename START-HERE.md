@@ -46,10 +46,10 @@ Same page, **Secrets** tab:
 
 | Secret | Where | Cost |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | <https://console.anthropic.com> | ~$0.10–0.15 per post |
+| `ANTHROPIC_API_KEY` | <https://console.anthropic.com> | ~$0.04–0.06 per post |
 | `GEMINI_API_KEY` | <https://aistudio.google.com/apikey> | ~$0.04 per image |
 
-Together: roughly **$4–6/month** at one post a day.
+Together: roughly **$3/month** at one post a day.
 
 **Gemini image generation has no free tier** — enable billing on the Google Cloud
 project behind the key, or every run fails with a quota error. Neither key is

@@ -125,10 +125,10 @@ Actions → Variables): `PAGES_BASE_URL` = that URL, no trailing slash.
 
 | Secret | Where to get it | Cost |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | <https://console.anthropic.com> | ~$0.10–0.15 per post (recipe + photo check) |
+| `ANTHROPIC_API_KEY` | <https://console.anthropic.com> | ~$0.04–0.06 per post (recipe + photo check) |
 | `GEMINI_API_KEY` | <https://aistudio.google.com/apikey> | ~$0.04 per image |
 
-At one post a day that is roughly **$4–6/month** — see
+At one post a day that is roughly **$3/month** — see
 [Where the money goes](#where-the-money-goes) for the breakdown and the levers
 that bring it down. Gemini image generation has **no free tier**; billing must be
 enabled on the Google Cloud project behind the key or every run fails with a 429.
@@ -258,8 +258,8 @@ one.
 | `TIKTOK_AUTO_ADD_MUSIC` | `true` | Let TikTok attach a trending sound (DIRECT_POST only) |
 | `IMAGE_PROVIDER` | `gemini` | Image backend |
 | `GEMINI_IMAGE_MODEL` | `gemini-2.5-flash-image` | `gemini-3-pro-image` for higher quality |
-| `RECIPE_MODEL` | `claude-opus-5` | Model for recipes and the image check |
-| `RECIPE_EFFORT` | `medium` | Raise to `high` if recipes feel generic |
+| `RECIPE_MODEL` | `claude-sonnet-5` | Model that writes the recipe. `claude-opus-5` if recipes start feeling generic |
+| `RECIPE_EFFORT` | `high` | Thinking depth for the recipe. `medium` trades some quality for cost |
 | `CHROME_BINARY` | auto-discovered | Explicit path to Chrome/Chromium |
 
 Every row above can be set as a **repository variable** and the workflows pass it
@@ -269,21 +269,36 @@ default" rather than passing `""` down to an API call.
 
 ### Where the money goes
 
-Roughly $0.14–0.19 a post at the defaults, split across three calls: the recipe
-(Claude), the hero photo (Gemini), and the photo sanity check (Claude).
+Roughly **$0.08–0.11 a post** at the defaults, split across three calls:
 
-The check used to share `RECIPE_MODEL`, which meant a yes/no visual judgement —
-is this food, does it match the dish, is there text on it — cost about as much as
-writing the whole recipe. It now runs on Haiku 4.5 by default, five times
-cheaper, with no measurable loss on a question that simple.
+| Call | Model | Cost |
+|---|---|---|
+| Write the recipe | Sonnet 5, high effort | ~$0.03–0.05 |
+| Generate the hero photo | Gemini 2.5 Flash Image | ~$0.04 |
+| Check the photo | Haiku 4.5 | ~$0.01 |
+
+About **$3/month** at one post a day. Everything downstream — rendering, staging,
+Pages hosting, Actions minutes — is free, so the whole bill is model calls.
+
+Two deliberate choices behind that. The recipe runs on **Sonnet at high effort**
+rather than Opus at medium: output tokens dominate the bill, so the tier matters
+more than the thinking depth, and high effort buys back most of what dropping a
+tier costs. The photo check runs on **Haiku**, because "is this food, does it
+match the dish, is there text on it" does not need a frontier model — it used to
+share `RECIPE_MODEL` and cost about as much as writing the entire recipe.
+
+Note Sonnet 5 is on introductory pricing ($2/$10 per million tokens) through
+**2026-08-31**, after which it returns to $3/$15 — expect the per-post figure to
+rise about 30% then, to roughly $4/month.
 
 `output_config.effort` is **rejected outright by Haiku 4.5**, so the check sends
 it only to models that accept it. If you point `IMAGE_CHECK_MODEL` at another
 model that doesn't support effort, add it to `_EFFORT_UNSUPPORTED` in
 `src/images/verify.py` — otherwise every run fails at that call.
 
-To cut cost further, try `RECIPE_MODEL=claude-sonnet-5` and compare a day's
-slides against the current ones before keeping it.
+A failed run still costs whatever completed before it died — a run that writes
+a recipe and then loses the image generation bills for the recipe. That is the
+main argument for the retry in `src/images/gemini.py`.
 
 ---
 
@@ -332,9 +347,11 @@ TikTok there's no rotation to manage.
 
 ## Costs
 
-At one post a day, roughly **$1–2/month**: about $0.03 per image and $0.01–0.03
-per recipe. GitHub Actions and Pages are free at this volume. TikTok's daily
-posting cap is far above one post a day.
+See [Where the money goes](#where-the-money-goes) for the per-call breakdown —
+roughly **$3/month** at one post a day, all of it model calls.
+
+TikTok's own daily posting cap is far above one post a day, so nothing here is
+constrained by the platform.
 
 ---
 
