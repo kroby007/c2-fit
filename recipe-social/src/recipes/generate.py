@@ -57,7 +57,12 @@ def _schema(exclude_methods: list[str] | None = None) -> dict[str, Any]:
         "properties": {
             "title": {
                 "type": "string",
-                "description": "Dish name, max 40 characters so it fits the hook card.",
+                "description": (
+                    "Dish name, max 40 characters so it fits the hook card. Do not "
+                    "name a cooking method the recipe does not use — a one-pot "
+                    "recipe called 'Chicken Skillet' is rejected. The title is the "
+                    "only thing the reader sees, so it has to match the method."
+                ),
             },
             "hook": {
                 "type": "string",

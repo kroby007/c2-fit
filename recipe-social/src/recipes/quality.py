@@ -64,6 +64,34 @@ def _title_tokens(title: str) -> set[str]:
     return {w for w in _WORD_RE.findall(title.lower()) if w not in stop and len(w) > 2}
 
 
+# What each method is called when it turns up in a dish name. Deliberately just
+# the method's own names — nothing like "baked" or "pan", which appear in plenty
+# of honest titles and would hold good posts for no reason.
+METHOD_WORDS = {
+    "skillet": ("skillet",),
+    "sheet_pan": ("sheet pan", "sheet-pan", "tray bake", "traybake"),
+    "air_fryer": ("air fryer", "air-fryer", "air fried", "air-fried"),
+    "one_pot": ("one pot", "one-pot"),
+    "no_cook": ("no cook", "no-cook"),
+}
+
+
+def mislabelled_method(recipe: Recipe) -> str | None:
+    """Return the method the title claims, if the recipe does not actually use it.
+
+    The method field is never rendered anywhere — the reader only ever sees the
+    title. So rotating the method away from skillet achieves nothing on its own
+    if the title still says Skillet, which nothing otherwise prevents.
+    """
+    title = recipe.title.lower()
+    for method, words in METHOD_WORDS.items():
+        if method == recipe.method:
+            continue
+        if any(word in title for word in words):
+            return method
+    return None
+
+
 def is_duplicate(recipe: Recipe, past_titles: list[str], threshold: float = 0.6) -> str | None:
     """Return the matching past title if this recipe is too similar to one."""
     tokens = _title_tokens(recipe.title)
@@ -144,6 +172,13 @@ def check(
     for allergen in niche["allergens_to_flag"]:
         if allergen in ingredient_text and allergen not in recipe.allergens:
             reasons.append(f"Ingredients mention '{allergen}' but it is not declared.")
+
+    claimed = mislabelled_method(recipe)
+    if claimed:
+        reasons.append(
+            f"Title says {claimed.replace('_', ' ')} but the recipe is {recipe.method.replace('_', ' ')}: "
+            f"{recipe.title!r}."
+        )
 
     if past_titles:
         match = is_duplicate(recipe, past_titles)

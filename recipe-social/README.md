@@ -364,6 +364,13 @@ returned at all. With five methods in `niche.yaml` and two excluded, there are
 always at least three to choose from — and if you shorten that list, the
 exclusion yields rather than leaving an empty enum and a failed run.
 
+**The method is never rendered anywhere** — not on a slide, not in the caption.
+The title is the only thing a reader ever sees. So rotating the method achieves
+nothing on its own if the dish is still *called* a Skillet, and the gate holds
+any title naming a method the recipe doesn't use. Only the methods' own names
+count: `baked` and `pan` appear in plenty of honest titles, and holding those
+would cost more good posts than it saved.
+
 > **The first three posts were all skillets**, and nearly the same dish each
 > time. `queue.record()` was only ever called by the publish stage, so running in
 > manual mode left `history.json` permanently empty — and every mechanism above

@@ -127,6 +127,47 @@ def test_exclusion_yields_rather_than_emptying_the_enum() -> None:
     assert len(gen.available_methods(every[:-1])) >= 2
 
 
+# --------------------------------------------------------------------------- #
+# the part that is actually visible
+# --------------------------------------------------------------------------- #
+
+def test_a_rotated_method_cannot_keep_the_old_name_in_the_title() -> None:
+    """method is never rendered — the title is the only thing anyone reads.
+
+    So rotating the method to one_pot achieves nothing if the dish is still
+    called a Skillet, and nothing else in the pipeline prevents that.
+    """
+    from src.recipes.quality import mislabelled_method
+
+    assert mislabelled_method(_recipe("Chicken & Bean Skillet", "one_pot")) == "skillet"
+    assert mislabelled_method(_recipe("Air Fryer Chicken", "sheet_pan")) == "air_fryer"
+    assert mislabelled_method(_recipe("Sheet-Pan Salmon", "skillet")) == "sheet_pan"
+
+    # A title naming the method it actually uses is the normal, good case.
+    assert mislabelled_method(_recipe("Chicken & Bean Skillet", "skillet")) is None
+    assert mislabelled_method(_recipe("Air Fryer Chicken", "air_fryer")) is None
+
+
+def test_the_gate_holds_a_title_that_contradicts_its_method() -> None:
+    from src.recipes import quality
+
+    reasons = quality.check(_recipe("Chicken & Bean Skillet", "one_pot"))
+    assert any("Title says skillet" in r and "recipe is one pot" in r for r in reasons)
+
+    honest = quality.check(_recipe("Chicken & Bean Skillet", "skillet"))
+    assert not any("Title says" in r for r in honest)
+
+
+@pytest.mark.parametrize(
+    "title", ["Baked Chicken Thighs", "Pan-Seared Salmon Bowls", "Crispy Potato Hash"]
+)
+def test_ordinary_cooking_words_are_not_treated_as_method_claims(title: str) -> None:
+    """'baked' and 'pan' appear in honest titles; holding those would be worse."""
+    from src.recipes.quality import mislabelled_method
+
+    assert mislabelled_method(_recipe(title, "sheet_pan")) is None
+
+
 def test_the_prompt_explains_the_missing_option() -> None:
     """Without this the model writes a skillet recipe and calls it one_pot."""
     prompt = gen._prompt([], ["skillet", "sheet_pan"])
