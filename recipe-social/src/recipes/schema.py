@@ -56,6 +56,9 @@ class Recipe:
     steps: list[str]
     macros: Macros
     cost_per_serving: float
+    # The main protein. Rotated like method, and the stronger variety signal of
+    # the two — defaults to empty so recipes saved before it existed still load.
+    protein: str = ""
     allergens: list[str] = field(default_factory=list)
     series: list[str] = field(default_factory=list)
     # Short plated-dish description used to build the food photography prompt.
@@ -63,8 +66,11 @@ class Recipe:
     slug: str = ""
 
     def __post_init__(self) -> None:
-        if not self.slug:
-            self.slug = slugify(self.title)
+        # Always derived, never trusted from the input. The slug is what the
+        # never-repeat check keys on, and the README tells you to fix a long
+        # title by editing post.json — which would otherwise leave the old slug
+        # behind, silently identifying the recipe as one it no longer is.
+        self.slug = slugify(self.title)
 
     @property
     def total_minutes(self) -> int:

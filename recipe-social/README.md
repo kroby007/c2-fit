@@ -353,10 +353,31 @@ committed doesn't survive to tomorrow. Four things read it:
 
 | Reads | Effect |
 |---|---|
-| `recent_titles()` | Recent titles go into the prompt as "do not create anything similar" |
-| `recent_methods()` | The last 2 cooking methods are **removed from the JSON schema**, so the model cannot return them |
+| `all_slugs()` | A recipe that has run before is **refused outright**, however long ago |
+| `recent_titles()` | Recent titles go into the prompt as "do not create anything similar", and a title sharing most of its words with one is rejected |
+| `recent_proteins()` | The last 4 proteins are **removed from the JSON schema**, so the model cannot return them |
+| `recent_methods()` | The last 2 cooking methods, likewise |
 | `recent_hashtags()` | Rotates the tag selection away from the last 5 posts |
 | `already_posted_today()` | Stops a re-run double-posting |
+
+**Protein is the stronger of the two rotations**, and rotates further back.
+Chicken cooked four different ways is still chicken four days running — which is
+exactly how this feed started out. The pan is a smaller tell than the protein.
+
+### Repeats are retried, not held
+
+A repeat is checked for in `generate`, **before the image is bought**, and the
+generator is simply asked again — up to 3 times, with the rejected title added to
+the exclusion list so the retry doesn't just rephrase it. A repeat caught here
+costs one recipe call, a few cents. A repeat caught by the gate costs the whole
+day's post.
+
+If all 3 attempts still repeat, the run continues and the gate holds it. That's
+deliberate: a held post you can see beats a silent repeat.
+
+`all_slugs()` is unbounded, unlike every other window. The others trade recency
+against pools that would otherwise exhaust themselves — but an exact repeat is
+never acceptable, no matter how long ago it ran.
 
 Method rotation is enforced in the schema rather than asked for in the prompt.
 A prompt instruction can be ignored; a value that isn't in the enum cannot be

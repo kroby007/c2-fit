@@ -107,11 +107,34 @@ def is_duplicate(recipe: Recipe, past_titles: list[str], threshold: float = 0.6)
     return None
 
 
+def repeat_reason(
+    recipe: Recipe,
+    past_titles: list[str] | None = None,
+    past_slugs: set[str] | None = None,
+) -> str | None:
+    """Why this recipe repeats an earlier post, or None if it is new.
+
+    Two tiers. A slug that has run before is an exact repeat and is refused
+    outright, however long ago it was. Short of that, a title sharing most of
+    its words with a recent one is the same dinner wearing a different name.
+
+    Split out from check() so the generator can ask the same question before
+    anything expensive happens, and simply write another recipe.
+    """
+    if recipe.slug and recipe.slug in (past_slugs or set()):
+        return f"{recipe.title!r} has been posted before."
+    match = is_duplicate(recipe, past_titles or [])
+    if match:
+        return f"Too similar to a previous post: {match!r}."
+    return None
+
+
 def check(
     recipe: Recipe,
     past_titles: list[str] | None = None,
     caption: str = "",
     hashtags: list[str] | None = None,
+    past_slugs: set[str] | None = None,
 ) -> list[str]:
     """Return hold reasons. Empty list means the post is clear to publish.
 
@@ -180,10 +203,9 @@ def check(
             f"{recipe.title!r}."
         )
 
-    if past_titles:
-        match = is_duplicate(recipe, past_titles)
-        if match:
-            reasons.append(f"Too similar to a previous post: {match!r}.")
+    repeat = repeat_reason(recipe, past_titles, past_slugs)
+    if repeat:
+        reasons.append(repeat)
 
     full = f"{caption}\n\n{' '.join(hashtags)}".strip()
     if len(full) > MAX_CAPTION_CHARS:

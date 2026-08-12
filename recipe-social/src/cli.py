@@ -40,6 +40,11 @@ ALL_PLATFORMS = ("tiktok", "instagram", "facebook")
 # publishers are built and tested; name them with --platforms to bring them back.
 DEFAULT_PLATFORMS = ("tiktok",)
 
+# How many times to ask for a different recipe when the one returned repeats an
+# earlier post. Each retry is a recipe call and nothing else, so the ceiling is
+# about bounding a bad day rather than bounding cost.
+MAX_GENERATE_ATTEMPTS = 3
+
 
 def _today() -> str:
     return dt.date.today().isoformat()
@@ -83,10 +88,31 @@ def cmd_generate(args: argparse.Namespace) -> None:
         print("  (pass --regenerate to write a new one)")
         return
 
-    recipe = generate_recipe(
-        exclude_titles=queue.recent_titles(),
-        exclude_methods=queue.recent_methods(),
-    )
+    titles = queue.recent_titles()
+    slugs = queue.all_slugs()
+
+    # A repeat is asked about here rather than left to the gate. Caught now it
+    # costs one more recipe call — a few cents — because nothing expensive has
+    # happened yet; caught by the gate it costs the whole day's post. The
+    # rejected title joins the exclusion list so the retry does not just
+    # rephrase it.
+    for attempt in range(1, MAX_GENERATE_ATTEMPTS + 1):
+        recipe = generate_recipe(
+            exclude_titles=titles,
+            exclude_methods=queue.recent_methods(),
+            exclude_proteins=queue.recent_proteins(),
+        )
+        repeat = quality.repeat_reason(recipe, titles, slugs)
+        if not repeat:
+            break
+        print(f"Attempt {attempt}: {repeat} Asking for a different one.")
+        titles = titles + [recipe.title]
+    else:
+        # Deliberately not an error. The gate still has the final say, and a
+        # held post the user can see beats a silent repeat.
+        print(f"Still repeating after {MAX_GENERATE_ATTEMPTS} attempts — "
+              "leaving it to the gate.")
+
     post = Post(recipe=recipe, date=date)
     post.hashtags = compose.build_hashtags(recipe, recent=queue.recent_hashtags())
     post.caption = compose.build_caption(recipe)
@@ -310,6 +336,7 @@ def cmd_gate(args: argparse.Namespace) -> None:
         past_titles=queue.recent_titles(),
         caption=post.caption,
         hashtags=post.hashtags,
+        past_slugs=queue.all_slugs(),
     )
     post.hold_reasons = reasons
     post.held = bool(reasons)
@@ -381,7 +408,8 @@ def cmd_publish(args: argparse.Namespace) -> None:
 
     if not args.dry_run:
         queue.record(date, post.recipe.slug, post.recipe.title, post.hashtags,
-                     post.published, method=post.recipe.method)
+                     post.published, method=post.recipe.method,
+                     protein=post.recipe.protein)
 
     if any_failed:
         sys.exit(1)
@@ -425,7 +453,8 @@ def cmd_run(args: argparse.Namespace) -> None:
         shutil.move(str(_post_dir(date)), str(held_dir))
         notify.report_held(post.recipe.title, post.hold_reasons, str(held_dir))
         queue.record(date, post.recipe.slug, post.recipe.title, post.hashtags,
-                     held=True, method=post.recipe.method)
+                     held=True, method=post.recipe.method,
+                     protein=post.recipe.protein)
         # A held post is the gate doing its job, not a pipeline failure.
         return
 
@@ -449,7 +478,7 @@ def cmd_run(args: argparse.Namespace) -> None:
         # That is why the first posts were all skillets.
         queue.record(
             date, post.recipe.slug, post.recipe.title, post.hashtags,
-            method=post.recipe.method,
+            method=post.recipe.method, protein=post.recipe.protein,
         )
         print(
             "\nManual mode: nothing was sent to TikTok. Commit and push docs/, "

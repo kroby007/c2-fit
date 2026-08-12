@@ -6,13 +6,33 @@
   "prep_minutes": 5,
   "cook_minutes": 10,
   "ingredients": [
-    {"item": "pasta", "qty": "8 oz"},
-    {"item": "peanut butter", "qty": "2 tbsp"}
+    {
+      "item": "pasta",
+      "qty": "8 oz"
+    },
+    {
+      "item": "peanut butter",
+      "qty": "2 tbsp"
+    }
   ],
-  "steps": ["Boil the pasta.", "Stir through the peanut butter."],
-  "macros": {"calories": 90, "protein_g": 80, "carbs_g": 70, "fat_g": 20},
+  "steps": [
+    "Boil the pasta.",
+    "Stir through the peanut butter."
+  ],
+  "macros": {
+    "calories": 90,
+    "protein_g": 80,
+    "carbs_g": 70,
+    "fat_g": 20
+  },
   "cost_per_serving": 1.5,
   "allergens": [],
-  "series": ["high_protein", "budget", "air_fryer", "fifteen_min"],
-  "image_subject": "A bowl of pasta."
+  "series": [
+    "high_protein",
+    "budget",
+    "air_fryer",
+    "fifteen_min"
+  ],
+  "image_subject": "A bowl of pasta.",
+  "protein": "chicken"
 }

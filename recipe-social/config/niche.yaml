@@ -23,12 +23,29 @@ constraints:
   min_series_tags: 1
 
 methods:
-  # Rotated so the feed does not become all one appliance.
+  # Rotated so the feed does not become all one appliance. The last few are
+  # removed from the generator's schema outright, so it cannot pick them.
   - skillet
   - sheet_pan
   - air_fryer
   - one_pot
   - no_cook
+
+proteins:
+  # Rotated the same way, and the more important of the two axes: chicken cooked
+  # four different ways is still chicken four days running, which is exactly how
+  # the feed started out.
+  - chicken
+  - ground_beef
+  - ground_turkey
+  - pork
+  - salmon
+  - white_fish
+  - shrimp
+  - eggs
+  - tofu
+  - beans_or_lentils
+  - canned_tuna
 
 require:
   - "Common supermarket ingredients only — nothing that needs a specialty store."

@@ -43,10 +43,10 @@ def history(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch) -> pathlib.
     return path
 
 
-def _recipe(title: str, method: str = "skillet") -> Recipe:
+def _recipe(title: str, method: str = "skillet", protein: str = "chicken") -> Recipe:
     return Recipe(
-        title=title, hook="x", method=method, servings=4, prep_minutes=5,
-        cook_minutes=15, ingredients=[], steps=[],
+        title=title, hook="x", method=method, protein=protein, servings=4,
+        prep_minutes=5, cook_minutes=15, ingredients=[], steps=[],
         macros=Macros(500, 40, 50, 15), cost_per_serving=2.5,
     )
 
@@ -175,3 +175,79 @@ def test_the_prompt_explains_the_missing_option() -> None:
     assert "not the same technique renamed" in prompt
 
     assert "Pick a genuinely different" not in gen._prompt([], [])
+
+
+# --------------------------------------------------------------------------- #
+# the protein axis
+#
+# The stronger of the two. Chicken cooked four different ways is still chicken
+# four days running, which is how the feed actually started out — every one of
+# the three shipped posts was chicken and black beans.
+# --------------------------------------------------------------------------- #
+
+def test_recent_proteins_are_removed_from_the_schema_enum() -> None:
+    every = list(config.niche()["proteins"])
+    assert "chicken" in every, "fixture assumption"
+
+    offered = gen.available_proteins(["chicken"])
+    assert "chicken" not in offered
+    assert gen._schema(None, ["chicken"])["properties"]["protein"]["enum"] == offered
+
+
+def test_the_protein_rotates_further_back_than_the_method() -> None:
+    """One pan repeating is a smaller tell than one protein repeating."""
+    assert queue.PROTEIN_WINDOW > queue.METHOD_WINDOW
+
+
+def test_three_chicken_posts_rule_chicken_out_of_the_next_one(
+    history: pathlib.Path
+) -> None:
+    """End to end on the real data that prompted this."""
+    for i, title in enumerate(SHIPPED):
+        queue.record(f"2026-08-0{i + 8}", "s", title, [],
+                     method="skillet", protein="chicken")
+
+    schema = gen._schema(queue.recent_methods(), queue.recent_proteins())
+    assert "chicken" not in schema["properties"]["protein"]["enum"]
+    assert "skillet" not in schema["properties"]["method"]["enum"]
+
+
+def test_the_protein_exclusion_also_yields_rather_than_emptying() -> None:
+    every = list(config.niche()["proteins"])
+    assert gen.available_proteins(every) == every
+
+
+def test_the_prompt_names_the_excluded_proteins() -> None:
+    prompt = gen._prompt([], None, ["chicken", "salmon"])
+    assert "chicken, salmon" in prompt
+    # Swapping the protein while keeping the rest is the obvious way to comply
+    # with the letter of the instruction and still post the same dinner.
+    assert "same beans and the same sauce under a new protein" in prompt
+
+
+# --------------------------------------------------------------------------- #
+# never repeat
+# --------------------------------------------------------------------------- #
+
+def test_a_slug_that_has_run_before_is_refused_outright(history: pathlib.Path) -> None:
+    """Unbounded, unlike the similarity window: an exact repeat is never fine."""
+    from src.recipes.quality import repeat_reason
+
+    queue.record("2020-01-01", "chicken-black-bean-rice-skillet", SHIPPED[0], [])
+
+    again = _recipe(SHIPPED[0])
+    assert again.slug == "chicken-black-bean-rice-skillet", "slug derives from title"
+    assert "has been posted before" in repeat_reason(again, [], queue.all_slugs())
+
+    # Nothing in common with it, years later, is still fine.
+    assert repeat_reason(_recipe("Sheet-Pan Salmon"), [], queue.all_slugs()) is None
+
+
+def test_the_gate_still_catches_a_repeat_the_generator_let_through() -> None:
+    """repeat_reason is one definition used in both places, not two that drift."""
+    from src.recipes import quality
+
+    reasons = quality.check(
+        _recipe(SHIPPED[0]), past_slugs={"chicken-black-bean-rice-skillet"}
+    )
+    assert any("has been posted before" in r for r in reasons)

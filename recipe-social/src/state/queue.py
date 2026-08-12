@@ -22,6 +22,9 @@ HASHTAG_WINDOW = 5
 # still leaves three to choose from — enough that the model is not boxed into a
 # bad fit, tight enough that the feed cannot become all one appliance.
 METHOD_WINDOW = 2
+# Proteins rule out further back: there are eleven of them, and the protein is
+# what makes two posts feel like the same dinner more than the pan does.
+PROTEIN_WINDOW = 4
 
 
 def _load() -> list[dict[str, Any]]:
@@ -51,6 +54,21 @@ def recent_methods(limit: int = METHOD_WINDOW) -> list[str]:
     return [m for e in _load()[-limit:] if (m := e.get("method"))]
 
 
+def recent_proteins(limit: int = PROTEIN_WINDOW) -> list[str]:
+    """Main proteins used most recently, for the generator to avoid."""
+    return [p for e in _load()[-limit:] if (p := e.get("protein"))]
+
+
+def all_slugs() -> set[str]:
+    """Every slug ever posted.
+
+    Unbounded on purpose, unlike the other windows: those trade recency against
+    a pool that would otherwise exhaust itself, but an exact repeat is never
+    acceptable no matter how long ago it ran.
+    """
+    return {s for e in _load() if (s := e.get("slug"))}
+
+
 def record(
     date: str,
     slug: str,
@@ -59,6 +77,7 @@ def record(
     published: dict[str, Any] | None = None,
     held: bool = False,
     method: str = "",
+    protein: str = "",
 ) -> None:
     """Append one post to the history file."""
     entries = _load()
@@ -68,6 +87,7 @@ def record(
             "slug": slug,
             "title": title,
             "method": method,
+            "protein": protein,
             "hashtags": hashtags,
             "published": published or {},
             "held": held,

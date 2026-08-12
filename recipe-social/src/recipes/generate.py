@@ -22,23 +22,36 @@ MODEL = config.setting("RECIPE_MODEL", "claude-sonnet-5")
 EFFORT = config.setting("RECIPE_EFFORT", "high")
 
 
-def available_methods(exclude: list[str] | None = None) -> list[str]:
-    """Cooking methods the next recipe may use.
+def _rotate(key: str, exclude: list[str] | None = None) -> list[str]:
+    """Values from niche.yaml[key] with recent ones removed.
 
-    Recent methods are removed from the enum rather than merely discouraged in
+    Recent choices are dropped from the enum rather than merely discouraged in
     the prompt, because structured output cannot return a value the schema does
     not offer. Asking for variety is advisory; this is not.
 
     The exclusion yields if it would leave too little to choose from, so a short
-    methods list in niche.yaml degrades to a wider choice instead of an empty
-    enum and a failed run.
+    list in niche.yaml degrades to a wider choice instead of an empty enum and a
+    failed run.
     """
-    methods = list(config.niche()["methods"])
-    remaining = [m for m in methods if m not in set(exclude or ())]
-    return remaining if len(remaining) >= 2 else methods
+    values = list(config.niche()[key])
+    remaining = [v for v in values if v not in set(exclude or ())]
+    return remaining if len(remaining) >= 2 else values
 
 
-def _schema(exclude_methods: list[str] | None = None) -> dict[str, Any]:
+def available_methods(exclude: list[str] | None = None) -> list[str]:
+    """Cooking methods the next recipe may use."""
+    return _rotate("methods", exclude)
+
+
+def available_proteins(exclude: list[str] | None = None) -> list[str]:
+    """Main proteins the next recipe may use."""
+    return _rotate("proteins", exclude)
+
+
+def _schema(
+    exclude_methods: list[str] | None = None,
+    exclude_proteins: list[str] | None = None,
+) -> dict[str, Any]:
     """Build the JSON schema from config so methods and series stay in sync.
 
     Numeric bounds are deliberately absent — the structured-output schema does
@@ -50,7 +63,7 @@ def _schema(exclude_methods: list[str] | None = None) -> dict[str, Any]:
         "type": "object",
         "additionalProperties": False,
         "required": [
-            "title", "hook", "method", "servings", "prep_minutes", "cook_minutes",
+            "title", "hook", "method", "protein", "servings", "prep_minutes", "cook_minutes",
             "ingredients", "steps", "macros", "cost_per_serving", "allergens",
             "series", "image_subject",
         ],
@@ -72,6 +85,11 @@ def _schema(exclude_methods: list[str] | None = None) -> dict[str, Any]:
                 ),
             },
             "method": {"type": "string", "enum": available_methods(exclude_methods)},
+            "protein": {
+                "type": "string",
+                "enum": available_proteins(exclude_proteins),
+                "description": "The main protein the dish is built around.",
+            },
             "servings": {"type": "integer"},
             "prep_minutes": {"type": "integer"},
             "cook_minutes": {"type": "integer"},
@@ -134,7 +152,11 @@ def _schema(exclude_methods: list[str] | None = None) -> dict[str, Any]:
     }
 
 
-def _prompt(exclude_titles: list[str], exclude_methods: list[str] | None = None) -> str:
+def _prompt(
+    exclude_titles: list[str],
+    exclude_methods: list[str] | None = None,
+    exclude_proteins: list[str] | None = None,
+) -> str:
     niche = config.niche()
     brand = config.brand()
     c = niche["constraints"]
@@ -159,6 +181,13 @@ def _prompt(exclude_titles: list[str], exclude_methods: list[str] | None = None)
             "\n\nThe last posts used " + ", ".join(exclude_methods) + ". Pick a "
             "genuinely different way of cooking, not the same technique renamed — "
             "the feed should not look like one appliance."
+        )
+    if exclude_proteins:
+        recent += (
+            "\n\nThe last posts were built on " + ", ".join(exclude_proteins) + ". "
+            "Build this one on something else, and change the supporting cast too: "
+            "the same beans and the same sauce under a new protein still reads as "
+            "the same dinner."
         )
 
     return f"""Create one recipe for a short-form video account.
@@ -193,6 +222,7 @@ internally inconsistent numbers is worse than a simpler recipe with honest ones.
 def generate_recipe(
     exclude_titles: list[str] | None = None,
     exclude_methods: list[str] | None = None,
+    exclude_proteins: list[str] | None = None,
 ) -> Recipe:
     """Generate one recipe matching the niche brief, avoiding recent work."""
     client = anthropic.Anthropic()
@@ -201,10 +231,18 @@ def generate_recipe(
         max_tokens=16000,
         output_config={
             "effort": EFFORT,
-            "format": {"type": "json_schema", "schema": _schema(exclude_methods)},
+            "format": {
+                "type": "json_schema",
+                "schema": _schema(exclude_methods, exclude_proteins),
+            },
         },
         messages=[
-            {"role": "user", "content": _prompt(exclude_titles or [], exclude_methods)}
+            {
+                "role": "user",
+                "content": _prompt(
+                    exclude_titles or [], exclude_methods, exclude_proteins
+                ),
+            }
         ],
     )
 
@@ -220,6 +258,7 @@ def generate_recipe(
         servings=data["servings"],
         prep_minutes=data["prep_minutes"],
         cook_minutes=data["cook_minutes"],
+        protein=data["protein"],
         ingredients=[Ingredient(**i) for i in data["ingredients"]],
         steps=data["steps"],
         macros=Macros(**data["macros"]),

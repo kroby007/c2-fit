@@ -75,7 +75,7 @@ def wired(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch):
 
     monkeypatch.setattr(queue, "HISTORY_PATH", tmp_path / "state" / "history.json")
 
-    def fake_generate(exclude_titles=None, exclude_methods=None):
+    def fake_generate(exclude_titles=None, exclude_methods=None, exclude_proteins=None):
         return Recipe.from_dict(json.loads((FIXTURES / "recipe_good.json").read_text()))
 
     monkeypatch.setattr("src.recipes.generate.generate_recipe", fake_generate)
@@ -119,7 +119,7 @@ def test_stage_produces_verified_prefix_urls(wired: pathlib.Path) -> None:
 def test_bad_recipe_is_held_and_never_published(
     wired: pathlib.Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
 ) -> None:
-    def bad_generate(exclude_titles=None, exclude_methods=None):
+    def bad_generate(exclude_titles=None, exclude_methods=None, exclude_proteins=None):
         return Recipe.from_dict(json.loads((FIXTURES / "recipe_bad_macros.json").read_text()))
 
     monkeypatch.setattr("src.recipes.generate.generate_recipe", bad_generate)
@@ -267,6 +267,73 @@ def test_manual_run_sends_nothing_and_records_nothing(
     assert post.published == {}
 
 
+def test_a_repeated_recipe_is_asked_for_again_before_anything_is_rendered(
+    wired: pathlib.Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+) -> None:
+    """Tightening the repeat rules is only safe because a repeat is retried.
+
+    The retry has to happen in generate, before the image is bought: a repeat
+    caught by the gate costs the whole day, and one caught here costs cents.
+    """
+    from src.state import queue
+
+    queue.record("2026-07-20", "chili-crisp-chicken-bowls", "Chili Crisp Chicken Bowls",
+                 [], method="skillet", protein="chicken")
+
+    seen = []
+    base = json.loads((FIXTURES / "recipe_good.json").read_text())
+
+    def repeats_once(exclude_titles=None, exclude_methods=None, exclude_proteins=None):
+        seen.append(list(exclude_titles or []))
+        title = ("Chili Crisp Chicken Bowls" if len(seen) == 1
+                 else "Sheet-Pan Harissa Salmon")
+        return Recipe.from_dict({**base, "title": title})
+
+    monkeypatch.setattr("src.recipes.generate.generate_recipe", repeats_once)
+    images = []
+    monkeypatch.setattr(
+        "src.images.provider.get_provider",
+        lambda name=None: images.append(1) or _StubImageProvider(),
+    )
+
+    _run("generate")
+
+    assert len(seen) == 2, "the repeat should have been asked about again"
+    assert images == [], "no image may be bought while the recipe is still a repeat"
+    assert "Chili Crisp Chicken Bowls" in seen[1], \
+        "the rejected title must be excluded from the retry, or it just rephrases"
+
+    post = Post.load(config.OUT_DIR / DATE / "post.json")
+    assert post.recipe.title == "Sheet-Pan Harissa Salmon"
+    assert "Asking for a different one" in capsys.readouterr().out
+
+
+def test_retries_are_capped_and_fall_through_to_the_gate(
+    wired: pathlib.Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+) -> None:
+    """A model stuck in a rut must not bill forever, nor post a silent repeat."""
+    from src.state import queue
+
+    queue.record("2026-07-20", "chili-crisp-chicken-bowls", "Chili Crisp Chicken Bowls",
+                 [], method="skillet", protein="chicken")
+
+    calls = []
+
+    def always_repeats(exclude_titles=None, exclude_methods=None, exclude_proteins=None):
+        calls.append(1)
+        return Recipe.from_dict(json.loads((FIXTURES / "recipe_good.json").read_text()))
+
+    monkeypatch.setattr("src.recipes.generate.generate_recipe", always_repeats)
+    _run("generate")
+
+    assert len(calls) == cli.MAX_GENERATE_ATTEMPTS
+    assert "leaving it to the gate" in capsys.readouterr().out
+
+    # And the gate must then actually hold it, rather than the repeat slipping by.
+    _run("gate")
+    assert Post.load(config.OUT_DIR / DATE / "post.json").held
+
+
 def test_manual_run_records_the_post_in_the_history(wired: pathlib.Path) -> None:
     """Manual mode used to return before the only call that wrote the history.
 
@@ -344,12 +411,11 @@ def counted(wired: pathlib.Path, monkeypatch: pytest.MonkeyPatch):
     calls = {"recipe": 0, "image": 0, "exclude_methods": []}
     titles = iter(["First Dish", "Second Dish", "Third Dish"])
 
-    def counting_generate(exclude_titles=None, exclude_methods=None):
+    def counting_generate(exclude_titles=None, exclude_methods=None, exclude_proteins=None):
         calls["exclude_methods"] = list(exclude_methods or [])
         calls["recipe"] += 1
-        recipe = Recipe.from_dict(json.loads((FIXTURES / "recipe_good.json").read_text()))
-        recipe.title = next(titles)
-        return recipe
+        base = json.loads((FIXTURES / "recipe_good.json").read_text())
+        return Recipe.from_dict({**base, "title": next(titles)})
 
     stub = _StubImageProvider()
     real_generate = stub.generate
