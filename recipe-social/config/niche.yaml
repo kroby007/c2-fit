@@ -47,6 +47,22 @@ proteins:
   - beans_or_lentils
   - canned_tuna
 
+cuisines:
+  # The third axis, and the one that stops two dishes tasting the same. Rotating
+  # the protein alone still allowed garlic shrimp on Tuesday and honey garlic
+  # shrimp on Wednesday — different days, same dinner.
+  - mexican
+  - italian
+  - chinese
+  - thai
+  - japanese
+  - indian
+  - mediterranean
+  - middle_eastern
+  - korean
+  - american_diner
+  - cajun
+
 require:
   - "Common supermarket ingredients only — nothing that needs a specialty store."
   - "Exact quantities in both imperial and metric-friendly units (e.g. '1 lb (450g)')."

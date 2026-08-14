@@ -48,9 +48,15 @@ def available_proteins(exclude: list[str] | None = None) -> list[str]:
     return _rotate("proteins", exclude)
 
 
+def available_cuisines(exclude: list[str] | None = None) -> list[str]:
+    """Flavour directions the next recipe may take."""
+    return _rotate("cuisines", exclude)
+
+
 def _schema(
     exclude_methods: list[str] | None = None,
     exclude_proteins: list[str] | None = None,
+    exclude_cuisines: list[str] | None = None,
 ) -> dict[str, Any]:
     """Build the JSON schema from config so methods and series stay in sync.
 
@@ -63,7 +69,7 @@ def _schema(
         "type": "object",
         "additionalProperties": False,
         "required": [
-            "title", "hook", "method", "protein", "servings", "prep_minutes", "cook_minutes",
+            "title", "hook", "method", "protein", "cuisine", "servings", "prep_minutes", "cook_minutes",
             "ingredients", "steps", "macros", "cost_per_serving", "allergens",
             "series", "image_subject",
         ],
@@ -89,6 +95,15 @@ def _schema(
                 "type": "string",
                 "enum": available_proteins(exclude_proteins),
                 "description": "The main protein the dish is built around.",
+            },
+            "cuisine": {
+                "type": "string",
+                "enum": available_cuisines(exclude_cuisines),
+                "description": (
+                    "The flavour direction. Commit to it — the aromatics, sauce "
+                    "and garnish should all read as this cuisine, not as the same "
+                    "garlic-and-lemon base with one ingredient swapped."
+                ),
             },
             "servings": {"type": "integer"},
             "prep_minutes": {"type": "integer"},
@@ -156,6 +171,7 @@ def _prompt(
     exclude_titles: list[str],
     exclude_methods: list[str] | None = None,
     exclude_proteins: list[str] | None = None,
+    exclude_cuisines: list[str] | None = None,
 ) -> str:
     niche = config.niche()
     brand = config.brand()
@@ -188,6 +204,12 @@ def _prompt(
             "Build this one on something else, and change the supporting cast too: "
             "the same beans and the same sauce under a new protein still reads as "
             "the same dinner."
+        )
+    if exclude_cuisines:
+        recent += (
+            "\n\nAnd the last posts were " + ", ".join(exclude_cuisines) + ". Take "
+            "this one somewhere else entirely — a different flavour base, not the "
+            "same dish relabelled."
         )
 
     return f"""Create one recipe for a short-form video account.
@@ -223,6 +245,7 @@ def generate_recipe(
     exclude_titles: list[str] | None = None,
     exclude_methods: list[str] | None = None,
     exclude_proteins: list[str] | None = None,
+    exclude_cuisines: list[str] | None = None,
 ) -> Recipe:
     """Generate one recipe matching the niche brief, avoiding recent work."""
     client = anthropic.Anthropic()
@@ -233,14 +256,17 @@ def generate_recipe(
             "effort": EFFORT,
             "format": {
                 "type": "json_schema",
-                "schema": _schema(exclude_methods, exclude_proteins),
+                "schema": _schema(
+                    exclude_methods, exclude_proteins, exclude_cuisines
+                ),
             },
         },
         messages=[
             {
                 "role": "user",
                 "content": _prompt(
-                    exclude_titles or [], exclude_methods, exclude_proteins
+                    exclude_titles or [], exclude_methods, exclude_proteins,
+                    exclude_cuisines,
                 ),
             }
         ],
@@ -259,6 +285,7 @@ def generate_recipe(
         prep_minutes=data["prep_minutes"],
         cook_minutes=data["cook_minutes"],
         protein=data["protein"],
+        cuisine=data["cuisine"],
         ingredients=[Ingredient(**i) for i in data["ingredients"]],
         steps=data["steps"],
         macros=Macros(**data["macros"]),

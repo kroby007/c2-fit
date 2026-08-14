@@ -22,9 +22,11 @@ HASHTAG_WINDOW = 5
 # still leaves three to choose from — enough that the model is not boxed into a
 # bad fit, tight enough that the feed cannot become all one appliance.
 METHOD_WINDOW = 2
-# Proteins rule out further back: there are eleven of them, and the protein is
-# what makes two posts feel like the same dinner more than the pan does.
-PROTEIN_WINDOW = 4
+# Proteins and cuisines rule out further back: eleven of each, and they are what
+# make two posts feel like the same dinner. Six of eleven still leaves five to
+# choose from, while guaranteeing a protein cannot come back inside a week.
+PROTEIN_WINDOW = 6
+CUISINE_WINDOW = 6
 
 
 def _load() -> list[dict[str, Any]]:
@@ -59,6 +61,11 @@ def recent_proteins(limit: int = PROTEIN_WINDOW) -> list[str]:
     return [p for e in _load()[-limit:] if (p := e.get("protein"))]
 
 
+def recent_cuisines(limit: int = CUISINE_WINDOW) -> list[str]:
+    """Flavour directions used most recently, for the generator to avoid."""
+    return [c for e in _load()[-limit:] if (c := e.get("cuisine"))]
+
+
 def all_slugs() -> set[str]:
     """Every slug ever posted.
 
@@ -78,9 +85,19 @@ def record(
     held: bool = False,
     method: str = "",
     protein: str = "",
+    cuisine: str = "",
 ) -> None:
-    """Append one post to the history file."""
-    entries = _load()
+    """Record this post, replacing any earlier entry for the same date and slug.
+
+    More than one stage records: staging is the moment a post goes public in
+    manual mode, publishing is that moment when the API is in use, and either
+    can be re-run. Appending made the history depend on how many times a stage
+    happened to run, so this upserts instead. The entry moves to the end, which
+    is what the recency windows want.
+    """
+    entries = [
+        e for e in _load() if not (e["date"] == date and e.get("slug") == slug)
+    ]
     entries.append(
         {
             "date": date,
@@ -88,6 +105,7 @@ def record(
             "title": title,
             "method": method,
             "protein": protein,
+            "cuisine": cuisine,
             "hashtags": hashtags,
             "published": published or {},
             "held": held,

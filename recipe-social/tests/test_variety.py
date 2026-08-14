@@ -212,6 +212,31 @@ def test_three_chicken_posts_rule_chicken_out_of_the_next_one(
     assert "skillet" not in schema["properties"]["method"]["enum"]
 
 
+def test_recent_cuisines_are_removed_from_the_schema_enum() -> None:
+    """The third axis, and the one the two shrimp dishes needed.
+
+    Rotating the protein alone would still have allowed garlic shrimp on Tuesday
+    and honey garlic shrimp on Wednesday — different words, same plate.
+    """
+    every = list(config.niche()["cuisines"])
+    offered = gen.available_cuisines(["mexican"])
+    assert "mexican" not in offered
+    assert gen._schema(None, None, ["mexican"])["properties"]["cuisine"]["enum"] == offered
+    assert gen.available_cuisines(every) == every, "must yield rather than empty"
+
+
+def test_all_three_axes_are_withheld_together(history: pathlib.Path) -> None:
+    """A run has to see every exclusion at once, not one axis at a time."""
+    queue.record("2026-08-13", "s", "Air Fryer Honey Garlic Shrimp", [],
+                 method="air_fryer", protein="shrimp", cuisine="chinese")
+
+    schema = gen._schema(queue.recent_methods(), queue.recent_proteins(),
+                         queue.recent_cuisines())
+    assert "air_fryer" not in schema["properties"]["method"]["enum"]
+    assert "shrimp" not in schema["properties"]["protein"]["enum"]
+    assert "chinese" not in schema["properties"]["cuisine"]["enum"]
+
+
 def test_the_protein_exclusion_also_yields_rather_than_emptying() -> None:
     every = list(config.niche()["proteins"])
     assert gen.available_proteins(every) == every

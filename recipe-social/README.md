@@ -355,14 +355,24 @@ committed doesn't survive to tomorrow. Four things read it:
 |---|---|
 | `all_slugs()` | A recipe that has run before is **refused outright**, however long ago |
 | `recent_titles()` | Recent titles go into the prompt as "do not create anything similar", and a title sharing most of its words with one is rejected |
-| `recent_proteins()` | The last 4 proteins are **removed from the JSON schema**, so the model cannot return them |
+| `recent_proteins()` | The last 6 proteins are **removed from the JSON schema**, so the model cannot return them |
+| `recent_cuisines()` | The last 6 flavour directions, likewise |
 | `recent_methods()` | The last 2 cooking methods, likewise |
 | `recent_hashtags()` | Rotates the tag selection away from the last 5 posts |
 | `already_posted_today()` | Stops a re-run double-posting |
 
-**Protein is the stronger of the two rotations**, and rotates further back.
-Chicken cooked four different ways is still chicken four days running — which is
-exactly how this feed started out. The pan is a smaller tell than the protein.
+Three axes rotate, in ascending order of how much they matter. The **pan** is
+the weakest signal — chicken cooked four ways is still chicken four days
+running. The **protein** is stronger. The **cuisine** is what actually stops two
+posts tasting the same: rotating the protein alone still allowed garlic shrimp
+one day and honey garlic shrimp the next.
+
+Recording happens in the **stage** step, because staging is the moment a post
+goes public — the slides land on the site and the phone page points at them.
+That matters more than it sounds: the daily workflow runs the stages one at a
+time and never calls `run`, so recording anywhere inside `run` leaves the history
+empty in production while the tests, which do call `run`, pass. It is an upsert
+on date and slug, so a re-run cannot double-count.
 
 ### Repeats are retried, not held
 
@@ -397,6 +407,23 @@ would cost more good posts than it saved.
 > manual mode left `history.json` permanently empty — and every mechanism above
 > reads that file. The generator saw no recent titles, the gate had nothing to
 > compare against, and nothing tracked methods at all. Manual mode records now.
+
+## Slide 1 composition
+
+Slide 1 is the thumbnail, and its bottom third carries the badges, title and
+hook. Anything the photo puts down there gets covered up.
+
+So the composition is directed from `brand.yaml`, not fixed by cropping: the
+photographer is told to keep the dish in the **upper two thirds** and leave clean
+surface below it. That is the only lever that actually works. Cropping cannot
+solve it — with a centred dish in a 3:4 source there are just 90px of slack
+against the 4:5 canvas, and zooming in to lift the dish enlarges it by as much as
+it raises it, so its lower edge finishes where it started.
+
+The CSS does two smaller things alongside: a slight upward bias
+(`object-position: center 70%`) as a fallback for a photo that ignores the
+direction, and a scrim held light through the middle so the food keeps its colour,
+coming up hard only from 60% down where the text actually needs contrast.
 
 ## The quality gate
 

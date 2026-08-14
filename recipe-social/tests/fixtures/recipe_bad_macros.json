@@ -34,5 +34,6 @@
     "fifteen_min"
   ],
   "image_subject": "A bowl of pasta.",
-  "protein": "chicken"
+  "protein": "chicken",
+  "cuisine": "mexican"
 }

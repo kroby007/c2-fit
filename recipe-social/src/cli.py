@@ -101,6 +101,7 @@ def cmd_generate(args: argparse.Namespace) -> None:
             exclude_titles=titles,
             exclude_methods=queue.recent_methods(),
             exclude_proteins=queue.recent_proteins(),
+            exclude_cuisines=queue.recent_cuisines(),
         )
         repeat = quality.repeat_reason(recipe, titles, slugs)
         if not repeat:
@@ -257,6 +258,7 @@ def cmd_render(args: argparse.Namespace) -> None:
 
 def cmd_stage(args: argparse.Namespace) -> None:
     from .storage.base import get_storage
+    from .state import queue
 
     date = args.date
     post = _load(date)
@@ -279,6 +281,19 @@ def cmd_stage(args: argparse.Namespace) -> None:
     handoff.write_page(post, post.slide_urls)
     base = os.environ.get("PAGES_BASE_URL", "").rstrip("/")
     print(f"\n  Post it from your phone: {base}/{handoff.PAGE_NAME}")
+
+    # Recorded here, because staging is where a post becomes public: the slides
+    # are on the site and the phone page points at them. The daily workflow runs
+    # the stages one by one and never calls `run`, so recording anywhere in that
+    # function — as it was — left the history empty in production while the
+    # tests, which do call `run`, passed. Nothing that feeds recipe variety
+    # reads anything else, so this is the line that keeps the feed varied.
+    queue.record(
+        date, post.recipe.slug, post.recipe.title, post.hashtags,
+        method=post.recipe.method, protein=post.recipe.protein,
+        cuisine=post.recipe.cuisine,
+    )
+    print(f"  Recorded in {queue.path().name}: {post.recipe.title}")
 
     print(
         "\nThese must be live before publishing — commit and push docs/, and let "
@@ -409,7 +424,7 @@ def cmd_publish(args: argparse.Namespace) -> None:
     if not args.dry_run:
         queue.record(date, post.recipe.slug, post.recipe.title, post.hashtags,
                      post.published, method=post.recipe.method,
-                     protein=post.recipe.protein)
+                     protein=post.recipe.protein, cuisine=post.recipe.cuisine)
 
     if any_failed:
         sys.exit(1)
@@ -454,7 +469,7 @@ def cmd_run(args: argparse.Namespace) -> None:
         notify.report_held(post.recipe.title, post.hold_reasons, str(held_dir))
         queue.record(date, post.recipe.slug, post.recipe.title, post.hashtags,
                      held=True, method=post.recipe.method,
-                     protein=post.recipe.protein)
+                     protein=post.recipe.protein, cuisine=post.recipe.cuisine)
         # A held post is the gate doing its job, not a pipeline failure.
         return
 
@@ -471,15 +486,6 @@ def cmd_run(args: argparse.Namespace) -> None:
     # the public site and written the phone page, which is everything posting by
     # hand needs — and unlike publishing, it requires no TikTok app at all.
     if args.manual or _manual_mode_set():
-        # Recorded even though nothing was sent anywhere. The history is what
-        # stops the generator repeating itself, and it only ever got written by
-        # the publish stage — so running in manual mode left it permanently
-        # empty, and every run wrote its recipe with no idea what came before.
-        # That is why the first posts were all skillets.
-        queue.record(
-            date, post.recipe.slug, post.recipe.title, post.hashtags,
-            method=post.recipe.method, protein=post.recipe.protein,
-        )
         print(
             "\nManual mode: nothing was sent to TikTok. Commit and push docs/, "
             "then open the phone page above and post it yourself."

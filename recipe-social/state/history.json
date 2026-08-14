@@ -19,7 +19,8 @@
     ],
     "published": {},
     "held": false,
-    "protein": "chicken"
+    "protein": "chicken",
+    "cuisine": "mexican"
   },
   {
     "date": "2026-08-09",
@@ -41,7 +42,8 @@
     ],
     "published": {},
     "held": false,
-    "protein": "chicken"
+    "protein": "chicken",
+    "cuisine": "mexican"
   },
   {
     "date": "2026-08-11",
@@ -63,6 +65,53 @@
     ],
     "published": {},
     "held": false,
-    "protein": "chicken"
+    "protein": "chicken",
+    "cuisine": "mexican"
+  },
+  {
+    "date": "2026-08-12",
+    "slug": "garlic-lemon-air-fryer-shrimp",
+    "title": "Garlic Lemon Air Fryer Shrimp",
+    "method": "air_fryer",
+    "protein": "shrimp",
+    "cuisine": "mediterranean",
+    "hashtags": [
+      "#cooking",
+      "#easyrecipes",
+      "#proteinrecipes",
+      "#weeknightdinner",
+      "#budgetmeals",
+      "#quickdinner",
+      "#lazymeals",
+      "#airfryer",
+      "#realfoodfast",
+      "#dinnerin20",
+      "#onepanmeals"
+    ],
+    "published": {},
+    "held": false
+  },
+  {
+    "date": "2026-08-13",
+    "slug": "air-fryer-honey-garlic-shrimp",
+    "title": "Air Fryer Honey Garlic Shrimp",
+    "method": "air_fryer",
+    "protein": "shrimp",
+    "cuisine": "chinese",
+    "hashtags": [
+      "#cooking",
+      "#foodtok",
+      "#budgetmeals",
+      "#weeknightdinner",
+      "#proteinrecipes",
+      "#fastfood",
+      "#airfryer",
+      "#15minutemeals",
+      "#onepanmeals",
+      "#studentmeals",
+      "#highproteindinner"
+    ],
+    "published": {},
+    "held": false
   }
 ]

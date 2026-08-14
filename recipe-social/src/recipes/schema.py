@@ -59,6 +59,9 @@ class Recipe:
     # The main protein. Rotated like method, and the stronger variety signal of
     # the two — defaults to empty so recipes saved before it existed still load.
     protein: str = ""
+    # Flavour direction. The axis that stops two different proteins arriving as
+    # the same dinner; empty default so older saved recipes still load.
+    cuisine: str = ""
     allergens: list[str] = field(default_factory=list)
     series: list[str] = field(default_factory=list)
     # Short plated-dish description used to build the food photography prompt.

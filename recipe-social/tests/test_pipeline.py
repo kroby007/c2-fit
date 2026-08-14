@@ -75,7 +75,8 @@ def wired(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch):
 
     monkeypatch.setattr(queue, "HISTORY_PATH", tmp_path / "state" / "history.json")
 
-    def fake_generate(exclude_titles=None, exclude_methods=None, exclude_proteins=None):
+    def fake_generate(exclude_titles=None, exclude_methods=None, exclude_proteins=None,
+                        exclude_cuisines=None):
         return Recipe.from_dict(json.loads((FIXTURES / "recipe_good.json").read_text()))
 
     monkeypatch.setattr("src.recipes.generate.generate_recipe", fake_generate)
@@ -119,7 +120,8 @@ def test_stage_produces_verified_prefix_urls(wired: pathlib.Path) -> None:
 def test_bad_recipe_is_held_and_never_published(
     wired: pathlib.Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
 ) -> None:
-    def bad_generate(exclude_titles=None, exclude_methods=None, exclude_proteins=None):
+    def bad_generate(exclude_titles=None, exclude_methods=None, exclude_proteins=None,
+                        exclude_cuisines=None):
         return Recipe.from_dict(json.loads((FIXTURES / "recipe_bad_macros.json").read_text()))
 
     monkeypatch.setattr("src.recipes.generate.generate_recipe", bad_generate)
@@ -145,9 +147,15 @@ def test_second_run_is_blocked_by_the_already_posted_guard(
     assert "Already posted" in capsys.readouterr().out
 
 
-def test_dry_run_publish_sends_nothing_and_records_nothing(
+def test_dry_run_publish_sends_nothing_to_the_platform(
     wired: pathlib.Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """A dry run skips the API call — it does not un-publish what staging did.
+
+    Staging copies the slides onto the live site and rewrites the phone page, so
+    the recipe really has gone out and the history has to say so. What the dry
+    run must leave empty is the platform result.
+    """
     monkeypatch.setenv("TIKTOK_POST_MODE", "MEDIA_UPLOAD")
     _run("run", "--no-publish", "--no-check-image")
     _run("stage")
@@ -159,7 +167,9 @@ def test_dry_run_publish_sends_nothing_and_records_nothing(
 
     from src.state import queue
 
-    assert queue.recent_titles() == [], "a dry run must not enter the posting history"
+    entry = json.loads(queue.path().read_text())[-1]
+    assert entry["title"] == post.recipe.title, "staging put the post on the site"
+    assert entry["published"] == {}, "a dry run must not record a platform result"
 
 
 def test_publish_defaults_to_tiktok_only(
@@ -283,7 +293,8 @@ def test_a_repeated_recipe_is_asked_for_again_before_anything_is_rendered(
     seen = []
     base = json.loads((FIXTURES / "recipe_good.json").read_text())
 
-    def repeats_once(exclude_titles=None, exclude_methods=None, exclude_proteins=None):
+    def repeats_once(exclude_titles=None, exclude_methods=None, exclude_proteins=None,
+                        exclude_cuisines=None):
         seen.append(list(exclude_titles or []))
         title = ("Chili Crisp Chicken Bowls" if len(seen) == 1
                  else "Sheet-Pan Harissa Salmon")
@@ -319,7 +330,8 @@ def test_retries_are_capped_and_fall_through_to_the_gate(
 
     calls = []
 
-    def always_repeats(exclude_titles=None, exclude_methods=None, exclude_proteins=None):
+    def always_repeats(exclude_titles=None, exclude_methods=None, exclude_proteins=None,
+                        exclude_cuisines=None):
         calls.append(1)
         return Recipe.from_dict(json.loads((FIXTURES / "recipe_good.json").read_text()))
 
@@ -332,6 +344,40 @@ def test_retries_are_capped_and_fall_through_to_the_gate(
     # And the gate must then actually hold it, rather than the repeat slipping by.
     _run("gate")
     assert Post.load(config.OUT_DIR / DATE / "post.json").held
+
+
+def test_the_workflows_stage_by_stage_path_records_the_post(wired: pathlib.Path) -> None:
+    """The daily job never calls `run` — it invokes each stage in turn.
+
+    Recording used to live inside cmd_run, so production wrote nothing to the
+    history while the tests, which do call `run`, passed. The feed produced two
+    shrimp dishes back to back with an empty history behind it. This exercises
+    the exact sequence daily-post.yml runs.
+    """
+    from src.state import queue
+
+    _run("generate")
+    _run("render", "--no-check-image")
+    _run("gate")
+    _run("stage")
+
+    post = Post.load(config.OUT_DIR / DATE / "post.json")
+    assert queue.recent_titles() == [post.recipe.title]
+    assert queue.recent_proteins() == [post.recipe.protein]
+    assert queue.recent_cuisines() == [post.recipe.cuisine]
+    assert post.recipe.slug in queue.all_slugs()
+
+
+def test_recording_twice_does_not_duplicate_the_entry(wired: pathlib.Path) -> None:
+    """Stage is re-runnable, and publish records the same post again after it."""
+    from src.state import queue
+
+    _run("run", "--no-publish", "--no-check-image")
+    _run("stage")
+    _run("stage")
+
+    entries = json.loads(queue.path().read_text())
+    assert len(entries) == 1, "one post, one entry, however many times it staged"
 
 
 def test_manual_run_records_the_post_in_the_history(wired: pathlib.Path) -> None:
@@ -411,7 +457,8 @@ def counted(wired: pathlib.Path, monkeypatch: pytest.MonkeyPatch):
     calls = {"recipe": 0, "image": 0, "exclude_methods": []}
     titles = iter(["First Dish", "Second Dish", "Third Dish"])
 
-    def counting_generate(exclude_titles=None, exclude_methods=None, exclude_proteins=None):
+    def counting_generate(exclude_titles=None, exclude_methods=None, exclude_proteins=None,
+                        exclude_cuisines=None):
         calls["exclude_methods"] = list(exclude_methods or [])
         calls["recipe"] += 1
         base = json.loads((FIXTURES / "recipe_good.json").read_text())

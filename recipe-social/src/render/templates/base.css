@@ -71,17 +71,30 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;   /* crops the 3:4 generated image to the 4:5 canvas */
-  object-position: center;
+
+  /* Biased upward rather than centred. Only 90px separates the 3:4 source from
+     the 4:5 canvas, so this is worth about 20px on its own — the real work is
+     done by the composition direction in brand.yaml, which keeps the dish in
+     the upper two thirds. This is the fallback for a photo that ignores it.
+
+     Deliberately no scale(): magnifying to lift the dish grew it by as much as
+     it raised it, and its lower edge finished exactly where it started. */
+  object-position: center 70%;
 }
 
 .scrim {
   position: absolute;
   inset: 0;
+  /* Held light through the middle, where the dish now sits, and brought up hard
+     only from 60% — below that is the badges, title and hook, which need the
+     contrast. The old ramp reached 0.80 by 62% and dulled the food itself. */
   background: linear-gradient(
     to bottom,
     rgba(20, 17, 15, 0.55) 0%,
-    rgba(20, 17, 15, 0.15) 28%,
-    rgba(20, 17, 15, 0.80) 62%,
+    rgba(20, 17, 15, 0.10) 30%,
+    rgba(20, 17, 15, 0.18) 46%,
+    rgba(20, 17, 15, 0.70) 64%,
+    rgba(20, 17, 15, 0.94) 80%,
     rgba(20, 17, 15, 0.97) 100%
   );
 }
@@ -121,7 +134,7 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin-bottom: 30px;
+  margin-bottom: 24px;
 }
 
 .badge {
@@ -149,7 +162,7 @@ h1 {
 }
 
 .hook {
-  margin-top: 26px;
+  margin-top: 22px;
   font-weight: 900;
   font-size: 44px;
   line-height: 1.15;
