@@ -113,5 +113,28 @@
     ],
     "published": {},
     "held": false
+  },
+  {
+    "date": "2026-08-14",
+    "slug": "thai-basil-turkey-skillet",
+    "title": "Thai Basil Turkey Skillet",
+    "method": "skillet",
+    "protein": "ground_turkey",
+    "cuisine": "thai",
+    "hashtags": [
+      "#cooking",
+      "#easyrecipes",
+      "#healthyrecipes",
+      "#mealprep",
+      "#budgetmeals",
+      "#highproteinmeals",
+      "#eatingonabudget",
+      "#budgetcooking",
+      "#cheapproteinmeals",
+      "#easyhomecooking",
+      "#macrotracking"
+    ],
+    "published": {},
+    "held": false
   }
 ]
