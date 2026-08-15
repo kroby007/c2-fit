@@ -136,5 +136,28 @@
     ],
     "published": {},
     "held": false
+  },
+  {
+    "date": "2026-08-15",
+    "slug": "cajun-sheet-pan-salmon-potatoes",
+    "title": "Cajun Sheet-Pan Salmon & Potatoes",
+    "method": "sheet_pan",
+    "protein": "salmon",
+    "cuisine": "cajun",
+    "hashtags": [
+      "#food",
+      "#foodtok",
+      "#healthyrecipes",
+      "#easydinner",
+      "#quickmeals",
+      "#gymfood",
+      "#macrofriendly",
+      "#fitnessfood",
+      "#easyhomecooking",
+      "#onepanmeals",
+      "#realfoodfast"
+    ],
+    "published": {},
+    "held": false
   }
 ]
