@@ -159,5 +159,28 @@
     ],
     "published": {},
     "held": false
+  },
+  {
+    "date": "2026-08-16",
+    "slug": "air-fryer-korean-gochujang-pork-bites",
+    "title": "Air Fryer Korean Gochujang Pork Bites",
+    "method": "air_fryer",
+    "protein": "pork",
+    "cuisine": "korean",
+    "hashtags": [
+      "#recipe",
+      "#cooking",
+      "#healthyrecipes",
+      "#quickmeals",
+      "#weeknightdinner",
+      "#airfryermeals",
+      "#airfryerrecipes",
+      "#airfryerdinner",
+      "#simplemeals",
+      "#nofussdinner",
+      "#realfoodfast"
+    ],
+    "published": {},
+    "held": false
   }
 ]
