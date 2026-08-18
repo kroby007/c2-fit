@@ -425,6 +425,22 @@ The CSS does two smaller things alongside: a slight upward bias
 direction, and a scrim held light through the middle so the food keeps its colour,
 coming up hard only from 60% down where the text actually needs contrast.
 
+## When a photo comes out wrong
+
+The image model occasionally draws the wrong dish — on 2026-08-17 it returned
+beef for a tuna salad, and the vision check caught it. That used to cost the
+whole day: the gate held the post and a perfectly good recipe went in the bin
+over a four-cent image.
+
+Now the photo is redrawn instead, up to 3 times, with the check's own complaint
+fed back into the prompt — re-rolling the identical prompt tends to reproduce the
+same mistake. Only a run where every attempt is rejected reaches the gate.
+
+Held posts open a **GitHub issue** so a missed day is visible without reading run
+logs. That needs `GITHUB_TOKEN` in the job environment; it is not one by default,
+and while it was missing a hold printed into the log and nowhere else — which
+looks exactly like a day the job never ran.
+
 ## The quality gate
 
 Runs before anything publishes. It **corrects** what it can and **holds** what it

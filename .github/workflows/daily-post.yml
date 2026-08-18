@@ -78,6 +78,11 @@ jobs:
       #
       # Lets the run write the rotated TikTok refresh token back to Actions secrets
       GH_PAT: ${{ secrets.GH_PAT }}
+      # notify.report_held opens an issue only when it finds a token in the
+      # environment. GITHUB_TOKEN is not an env var by default — it has to be
+      # passed — so without this a held post printed into the run log and
+      # nowhere else, and a missed day looked exactly like a day that never ran.
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - uses: actions/checkout@v4

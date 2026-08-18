@@ -187,3 +187,86 @@ def test_gemini_gives_up_after_the_last_delay(monkeypatch: pytest.MonkeyPatch) -
     with pytest.raises(Exception):
         provider.generate("a bowl of chili", "3:4")
     assert len(attempts) == len(gemini._RETRY_DELAYS) + 1
+
+
+# --------------------------------------------------------------------------- #
+# a rejected photo must not cost the day's post
+#
+# 2026-08-17 was lost this way. The recipe — Za'atar Tuna & Chickpea Salad — was
+# fine; Gemini drew what the check called "beef or lamb meat, not tuna", the gate
+# held the post, and a four-cent image took the whole day down with it.
+# --------------------------------------------------------------------------- #
+
+def _render_args(tmp: pathlib.Path, date: str):
+    import argparse
+    return argparse.Namespace(date=date, check_image=True, new_image=False)
+
+
+def test_a_rejected_photo_is_redrawn_rather_than_held(
+    tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+) -> None:
+    from src import cli, config
+    from src.recipes.schema import Post
+
+    monkeypatch.setattr(config, "OUT_DIR", tmp_path / "out")
+    date = "2026-08-17"
+    recipe = _recipe()
+    Post(recipe=recipe, date=date).save(config.OUT_DIR / date / "post.json")
+
+    prompts_seen: list[str] = []
+
+    class _Provider:
+        def generate(self, prompt: str, aspect: str) -> bytes:
+            prompts_seen.append(prompt)
+            return b"png-bytes"
+
+    monkeypatch.setattr("src.images.provider.get_provider", lambda name=None: _Provider())
+    monkeypatch.setattr("src.render.slides.render_slides",
+                        lambda r, h, d: [d / "slide1.png"])
+    monkeypatch.setattr("src.render.slides.png_dimensions", lambda p: (1080, 1350))
+
+    verdicts = iter([
+        ["Hero image does not match the dish (shows beef, not tuna)."],
+        [],
+    ])
+    monkeypatch.setattr("src.images.verify.check_hero", lambda r, b: next(verdicts))
+
+    cli.cmd_render(_render_args(tmp_path, date))
+
+    assert len(prompts_seen) == 2, "the rejected photo must be redrawn"
+    assert "beef, not tuna" in prompts_seen[1], \
+        "the retry has to know what was wrong, or it redraws the same mistake"
+    assert Post.load(config.OUT_DIR / date / "post.json").hold_reasons == [], \
+        "a photo fixed on retry must not still hold the post"
+
+
+def test_a_photo_rejected_every_time_still_reaches_the_gate(
+    tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The retry bounds the damage; it does not paper over a real problem."""
+    from src import cli, config
+    from src.recipes.schema import Post
+
+    monkeypatch.setattr(config, "OUT_DIR", tmp_path / "out")
+    date = "2026-08-17"
+    Post(recipe=_recipe(), date=date).save(config.OUT_DIR / date / "post.json")
+
+    calls: list[int] = []
+
+    class _Provider:
+        def generate(self, prompt: str, aspect: str) -> bytes:
+            calls.append(1)
+            return b"png-bytes"
+
+    monkeypatch.setattr("src.images.provider.get_provider", lambda name=None: _Provider())
+    monkeypatch.setattr("src.render.slides.render_slides",
+                        lambda r, h, d: [d / "slide1.png"])
+    monkeypatch.setattr("src.render.slides.png_dimensions", lambda p: (1080, 1350))
+    monkeypatch.setattr("src.images.verify.check_hero",
+                        lambda r, b: ["Hero image does not show food."])
+
+    cli.cmd_render(_render_args(tmp_path, date))
+
+    assert len(calls) == cli.MAX_IMAGE_ATTEMPTS, "bounded, not unbounded"
+    assert Post.load(config.OUT_DIR / date / "post.json").hold_reasons, \
+        "a photo that never passes must still hold the post"

@@ -45,6 +45,11 @@ DEFAULT_PLATFORMS = ("tiktok",)
 # about bounding a bad day rather than bounding cost.
 MAX_GENERATE_ATTEMPTS = 3
 
+# How many hero images to try when the vision check rejects one. Each attempt is
+# an image plus a cheap check — a few cents against losing the day's post, which
+# is what a single bad photo used to cost.
+MAX_IMAGE_ATTEMPTS = 3
+
 
 def _today() -> str:
     return dt.date.today().isoformat()
@@ -223,28 +228,52 @@ def cmd_render(args: argparse.Namespace) -> None:
     # rather than paying for a second one. cmd_generate deletes it whenever it
     # writes a new recipe, so what is here always belongs to this post.
     # --new-image forces a fresh photo.
-    if hero_path.exists() and not args.new_image:
-        hero = hero_path.read_bytes()
-        print(f"Reusing the hero image already generated for {date} ({len(hero):,} bytes)")
-        print("  (pass --new-image to generate a new one)")
-    else:
-        provider = get_provider()
-        prompt = prompts.hero_prompt(post.recipe)
-        print(f"Generating hero image via {type(provider).__name__}...")
-        hero = provider.generate(prompt, prompts.aspect_ratio())
-        hero_path.write_bytes(hero)
+    reuse = hero_path.exists() and not args.new_image
+    reasons: list[str] = []
+    problem = ""
 
-    post.hero_image_path = str(hero_path)
+    # A rejected photo used to cost the whole day's post: the gate held it, and
+    # the recipe — already paid for, and fine — went in the bin over an image
+    # that costs four cents to redraw. So the image is redrawn instead, with the
+    # check's own complaint fed back into the prompt, and only a run that fails
+    # every attempt is handed to the gate.
+    for attempt in range(1, MAX_IMAGE_ATTEMPTS + 1):
+        if reuse:
+            hero = hero_path.read_bytes()
+            print(f"Reusing the hero image already generated for {date} ({len(hero):,} bytes)")
+            print("  (pass --new-image to generate a new one)")
+        else:
+            provider = get_provider()
+            print(f"Generating hero image via {type(provider).__name__}...")
+            hero = provider.generate(
+                prompts.hero_prompt(post.recipe, problem), prompts.aspect_ratio()
+            )
+            hero_path.write_bytes(hero)
 
-    if args.check_image:
+        if not args.check_image:
+            break
+
         from .images.verify import check_hero
 
         reasons = check_hero(post.recipe, hero)
-        if reasons:
-            post.hold_reasons.extend(reasons)
-            print("Image check flagged:")
-            for reason in reasons:
-                print(f"  - {reason}")
+        if not reasons:
+            break
+
+        print(f"Attempt {attempt}: image check flagged:")
+        for reason in reasons:
+            print(f"  - {reason}")
+        if attempt < MAX_IMAGE_ATTEMPTS:
+            print("  Drawing another one.")
+        # Whatever was on disk has now been judged and found wanting, so the
+        # next pass buys a fresh photo rather than re-reading this one.
+        reuse = False
+        problem = " ".join(reasons)
+
+    if reasons:
+        post.hold_reasons.extend(reasons)
+        print(f"Still flagged after {MAX_IMAGE_ATTEMPTS} attempts — leaving it to the gate.")
+
+    post.hero_image_path = str(hero_path)
 
     paths = render_slides(post.recipe, hero, out_dir)
     post.slide_paths = [str(p) for p in paths]
