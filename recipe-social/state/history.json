@@ -182,5 +182,28 @@
     ],
     "published": {},
     "held": false
+  },
+  {
+    "date": "2026-08-18",
+    "slug": "egg-lentil-skillet-curry",
+    "title": "Egg & Lentil Skillet Curry",
+    "method": "skillet",
+    "protein": "beans_or_lentils",
+    "cuisine": "indian",
+    "hashtags": [
+      "#food",
+      "#cooking",
+      "#highprotein",
+      "#cookingtiktok",
+      "#dinnerideas",
+      "#cheapmeals",
+      "#cheapeats",
+      "#bulkingmeals",
+      "#proteindinner",
+      "#weeklymealplan",
+      "#simplemeals"
+    ],
+    "published": {},
+    "held": false
   }
 ]
