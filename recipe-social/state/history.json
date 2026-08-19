@@ -205,5 +205,28 @@
     ],
     "published": {},
     "held": false
+  },
+  {
+    "date": "2026-08-19",
+    "slug": "sheet-pan-italian-meatball-broccoli",
+    "title": "Sheet-Pan Italian Meatball & Broccoli",
+    "method": "sheet_pan",
+    "protein": "ground_beef",
+    "cuisine": "italian",
+    "hashtags": [
+      "#foodtok",
+      "#easyrecipes",
+      "#quickmeals",
+      "#dinnerideas",
+      "#cookingtiktok",
+      "#groceryhaul",
+      "#proteinpacked",
+      "#eatingonabudget",
+      "#dinnerin20",
+      "#cheapproteinmeals",
+      "#proteindinner"
+    ],
+    "published": {},
+    "held": false
   }
 ]
