@@ -228,5 +228,28 @@
     ],
     "published": {},
     "held": false
+  },
+  {
+    "date": "2026-08-20",
+    "slug": "no-cook-tuna-chickpea-tahini-bowl",
+    "title": "No-Cook Tuna Chickpea Tahini Bowl",
+    "method": "no_cook",
+    "protein": "canned_tuna",
+    "cuisine": "middle_eastern",
+    "hashtags": [
+      "#food",
+      "#cooking",
+      "#proteinrecipes",
+      "#budgetmeals",
+      "#healthyrecipes",
+      "#15minutemeals",
+      "#lazymeals",
+      "#quickdinner",
+      "#highproteindinner",
+      "#studentmeals",
+      "#nofussdinner"
+    ],
+    "published": {},
+    "held": false
   }
 ]
