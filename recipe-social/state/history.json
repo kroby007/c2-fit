@@ -274,5 +274,28 @@
     ],
     "published": {},
     "held": false
+  },
+  {
+    "date": "2026-08-22",
+    "slug": "crispy-air-fryer-teriyaki-tofu",
+    "title": "Crispy Air Fryer Teriyaki Tofu",
+    "method": "air_fryer",
+    "protein": "tofu",
+    "cuisine": "japanese",
+    "hashtags": [
+      "#easyrecipes",
+      "#foodtok",
+      "#easydinner",
+      "#cookingtiktok",
+      "#proteinrecipes",
+      "#gymfood",
+      "#ninjafoodi",
+      "#airfryer",
+      "#easyhomecooking",
+      "#realfoodfast",
+      "#simplemeals"
+    ],
+    "published": {},
+    "held": false
   }
 ]
