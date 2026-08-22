@@ -66,20 +66,45 @@ def _title_size(title: str) -> int:
     return 66
 
 
-def _list_metrics(count: int, longest: int) -> tuple[int, int]:
-    """Font size and vertical padding for a list of `count` rows."""
-    if count <= 5:
-        size, pad = 36, 20
-    elif count <= 7:
-        size, pad = 33, 16
-    elif count <= 9:
-        size, pad = 30, 12
-    else:
-        size, pad = 27, 9
-    # A single very long line wraps to two rows and eats the budget twice over.
-    if longest > 78:
-        size -= 3
-    return size, pad
+# Vertical room each slide leaves its list, measured from the rendered slides
+# rather than guessed. Slide 2 gives the ingredients what is left of the panel
+# once the photo strip, the macro chips, the heading and the serves/time/cost
+# footer have taken their share; slide 3 is a full-height panel of steps with
+# only a heading, a title and the CTA above and below it, so it has far more.
+INGREDIENT_BUDGET_PX = 465
+STEP_BUDGET_PX = 720
+
+# Type never shrinks past this. Below it the slide stops being readable at the
+# size anyone actually views it, and the right answer is a shorter recipe —
+# niche.yaml caps ingredients at 10 for exactly this reason.
+MIN_LIST_SIZE = 22
+MAX_LIST_SIZE = 36
+
+
+def _row_height(size: int, pad: int) -> float:
+    """What one list row costs: line box, padding both sides, and the rule."""
+    return size * 1.28 + 2 * pad + 2
+
+
+def _list_metrics(count: int, longest: int, budget: int) -> tuple[int, int]:
+    """Largest type that fits `count` rows into `budget` pixels.
+
+    Solved against the budget rather than read off a table of counts. The table
+    was tuned by eye and quietly overflowed: nine ingredients came to roughly
+    850px of content in a 740px panel, so the serves/time/cost footer was pushed
+    off the bottom edge of the slide and simply cut in half.
+    """
+    if count <= 0:
+        return MAX_LIST_SIZE, 20
+    for size in range(MAX_LIST_SIZE, MIN_LIST_SIZE - 1, -1):
+        # Padding tightens faster than the type, so dense lists close up rather
+        # than turning into small text swimming in whitespace.
+        pad = max(6, round(size * 0.55) - (MAX_LIST_SIZE - size))
+        # A very long line wraps to two rows and costs the budget twice.
+        rows = count + (1 if longest > 78 else 0)
+        if rows * _row_height(size, pad) <= budget:
+            return size, pad
+    return MIN_LIST_SIZE, 6
 
 
 def _accent_for(recipe: Recipe) -> str:
@@ -145,8 +170,10 @@ def render_slides(recipe: Recipe, hero_image: bytes, out_dir: pathlib.Path) -> l
     out_dir.mkdir(parents=True, exist_ok=True)
 
     ingredient_rows = [i.display() for i in recipe.ingredients]
-    ing_size, ing_pad = _list_metrics(len(ingredient_rows), max(map(len, ingredient_rows), default=0))
-    step_size, step_pad = _list_metrics(len(recipe.steps), max(map(len, recipe.steps), default=0))
+    ing_size, ing_pad = _list_metrics(
+        len(ingredient_rows), max(map(len, ingredient_rows), default=0), INGREDIENT_BUDGET_PX)
+    step_size, step_pad = _list_metrics(
+        len(recipe.steps), max(map(len, recipe.steps), default=0), STEP_BUDGET_PX)
 
     hero_uri = _image_data_uri(hero_image)
     title_size = _title_size(recipe.title)

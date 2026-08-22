@@ -2,7 +2,7 @@
 
 Generates a daily recipe carousel and posts it to TikTok
 ([@c2_fit_](https://www.tiktok.com/@c2_fit_)). One recipe becomes three
-1080×1350 slides, a caption with emojis and rotated hashtags, and a post.
+1080×1350 slides, a caption with emojis and five rotated hashtags, and a post.
 
 ```
 generate  →  render  →  stage  →  gate  →  publish
@@ -440,6 +440,22 @@ Held posts open a **GitHub issue** so a missed day is visible without reading ru
 logs. That needs `GITHUB_TOKEN` in the job environment; it is not one by default,
 and while it was missing a hold printed into the log and nowhere else — which
 looks exactly like a day the job never ran.
+
+## Slide 2 composition
+
+The photo strip is a 2.3:1 letterbox of a 3:4 photo, so it can only ever show
+about a third of the source. Centring that window took the middle of the frame —
+and since the dish moved into the upper two thirds, that meant the plate arrived
+cut off at the top with bare table filling the space beneath it. The window is
+pulled up (`object-position: center 29%`) so it sits over the dish and the food
+fills the strip.
+
+List type is solved against the panel's height rather than read off a table of
+row counts. The table was tuned by eye and overflowed: nine ingredients came to
+roughly 850px of content in a 740px panel, so the serves/time/cost footer was
+pushed past the bottom edge of the slide and cut in half. Slide 2 and slide 3
+carry separate budgets, because slide 3's panel is full height and has room for
+much larger type.
 
 ## The quality gate
 

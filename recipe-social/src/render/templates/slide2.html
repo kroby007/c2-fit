@@ -4,10 +4,25 @@
 /* Photo occupies the top third; everything below sits on the flat background so
    the ingredient list stays legible at thumbnail size. */
 .photo-strip { position: absolute; top: 0; left: 0; width: 100%; height: 470px; }
-.photo-strip img { width: 100%; height: 100%; object-fit: cover; }
+/* The strip is a 2.3:1 letterbox of a 3:4 photo, so it can only ever show about
+   a third of the source. Centring that window took the middle of the frame,
+   which since the dish moved into the upper two thirds meant the plate arrived
+   cut off at the top with bare table filling the space underneath. Pulled up so
+   the window sits over the dish itself and the food fills the strip. */
+.photo-strip img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: center 29%;
+}
+/* Clear through the middle so the food keeps its colour; the macro chips carry
+   their own background and do not need the gradient to read against. */
 .photo-strip .fade {
   position: absolute; inset: 0;
-  background: linear-gradient(to bottom, rgba(20,17,15,0.45) 0%, rgba(20,17,15,0) 40%, rgba(20,17,15,0.95) 100%);
+  background: linear-gradient(to bottom,
+    rgba(20,17,15,0.45) 0%,
+    rgba(20,17,15,0.00) 34%,
+    rgba(20,17,15,0.12) 62%,
+    rgba(20,17,15,0.95) 100%);
 }
 .panel {
   position: absolute; top: 420px; left: var(--pad-x); right: var(--pad-x);

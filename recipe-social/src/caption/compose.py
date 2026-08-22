@@ -58,6 +58,17 @@ def build_hashtags(recipe: Recipe, recent: list[str] | None = None) -> list[str]
             if tag not in tags:
                 tags.append(tag)
 
+    # Top up if the buckets overlapped or a pool came up short. At a dozen tags
+    # a collision was noise; at five it is a fifth of the set missing, and a
+    # recipe that earns no series badge would otherwise post four.
+    if len(tags) < draw["max_total"]:
+        spare = [*cfg["core"], *cfg["discovery"], *cfg["broad"]]
+        for tag in pick(spare, len(spare)):
+            if len(tags) >= draw["max_total"]:
+                break
+            if tag not in tags:
+                tags.append(tag)
+
     # Trim to whichever ceiling bites first.
     tags = tags[: draw["max_total"]]
     while tags and len(" ".join(tags)) > draw["max_chars"]:

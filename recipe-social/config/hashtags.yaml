@@ -7,14 +7,19 @@
 # and a few narrow ones where you can actually reach the top posts.
 
 draw:
-  # How many to pull from each bucket per post.
-  broad: 2
-  core: 3
-  series: 3
-  discovery: 3
-  # Hard ceilings. TikTok counts hashtags against the 2200-char caption limit;
-  # Instagram rejects a post outright above 30.
-  max_total: 12
+  # How many to pull from each bucket per post. The set is small, so the spread
+  # matters more than it did at a dozen: one huge tag for the ranking signal,
+  # two mid-size ones the account can realistically rank in, one that matches the
+  # series badge, and one narrow tag where it can actually reach top posts.
+  broad: 1
+  core: 2
+  series: 1
+  discovery: 1
+  # Five tags per post. Instagram rejects a post outright above 30 and TikTok
+  # counts hashtags against the caption character limit, so neither platform
+  # forces a number this low — it is an editorial choice, and raising it is an
+  # edit to this one value plus the per-bucket counts above.
+  max_total: 5
   max_chars: 300
 
 broad:

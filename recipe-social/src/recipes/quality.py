@@ -210,7 +210,11 @@ def check(
     full = f"{caption}\n\n{' '.join(hashtags)}".strip()
     if len(full) > MAX_CAPTION_CHARS:
         reasons.append(f"Caption is {len(full)} chars, limit is {MAX_CAPTION_CHARS}.")
-    if len(hashtags) > MAX_HASHTAGS:
-        reasons.append(f"{len(hashtags)} hashtags, limit is {MAX_HASHTAGS}.")
+    # The account's own cap, not just the platform ceiling: hashtags.yaml is
+    # where the number is decided, so the gate reads it from there rather than
+    # keeping a second copy that can drift away from what the composer builds.
+    cap = min(MAX_HASHTAGS, int(config.hashtags()["draw"]["max_total"]))
+    if len(hashtags) > cap:
+        reasons.append(f"{len(hashtags)} hashtags, limit is {cap}.")
 
     return reasons

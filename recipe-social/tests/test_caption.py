@@ -81,3 +81,44 @@ def test_full_caption_joins_body_and_tags(good: Recipe) -> None:
     post.hashtags = compose.build_hashtags(good)
     assert post.full_caption.startswith(post.caption)
     assert post.full_caption.endswith(post.hashtags[-1])
+
+
+# --------------------------------------------------------------------------- #
+# five hashtags
+# --------------------------------------------------------------------------- #
+
+def test_the_set_is_capped_at_five(good: Recipe) -> None:
+    from src import config
+
+    recipe = good
+    assert config.hashtags()["draw"]["max_total"] == 5
+    assert len(compose.build_hashtags(recipe)) == 5
+
+
+def test_the_cap_is_met_exactly_even_when_buckets_collide(good: Recipe) -> None:
+    """At five tags one overlap is a fifth of the set, so the draw tops up.
+
+    A recipe earning no series badge draws nothing from that bucket, and used to
+    come out short rather than pulling a replacement from elsewhere.
+    """
+    recipe = good
+    recipe.series = []
+    assert len(compose.build_hashtags(recipe)) == 5
+
+
+def test_the_set_still_rotates_against_recent_posts(good: Recipe) -> None:
+    """A tight cap must not collapse into the same five tags every day."""
+    recipe = good
+    first = compose.build_hashtags(recipe)
+    second = compose.build_hashtags(recipe, recent=first)
+    assert len(second) == 5
+    assert set(first) != set(second), "consecutive posts must not repeat the block"
+
+
+def test_the_gate_enforces_the_configured_cap_not_just_the_platform_ceiling(
+    good: Recipe
+) -> None:
+    from src.recipes import quality
+
+    reasons = quality.check(good, hashtags=[f"#tag{i}" for i in range(6)])
+    assert any("hashtags, limit is 5" in r for r in reasons)

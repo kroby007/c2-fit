@@ -54,8 +54,9 @@ def test_title_size_shrinks_for_long_titles() -> None:
 
 
 def test_list_metrics_shrink_with_row_count() -> None:
-    small, _ = slides_mod._list_metrics(4, 30)
-    large, _ = slides_mod._list_metrics(11, 30)
+    budget = slides_mod.INGREDIENT_BUDGET_PX
+    small, _ = slides_mod._list_metrics(4, 30, budget)
+    large, _ = slides_mod._list_metrics(11, 30, budget)
     assert small > large
 
 
@@ -118,3 +119,52 @@ def _placeholder_hero(tmp_path: pathlib.Path) -> bytes:
         capture_output=True, timeout=120,
     )
     return png_path.read_bytes()
+
+
+# --------------------------------------------------------------------------- #
+# slide 2 fits what it is given
+#
+# The size table was tuned by eye and quietly overflowed: nine ingredients came
+# to roughly 850px of content in a 740px panel, so the serves/time/cost footer
+# was pushed past the bottom edge and cut in half. Nothing failed — the slide
+# rendered, it was just wrong.
+# --------------------------------------------------------------------------- #
+
+@pytest.mark.parametrize("count", range(1, 11))
+def test_an_ingredient_list_always_fits_its_panel(count: int) -> None:
+    from src.render.slides import INGREDIENT_BUDGET_PX, _list_metrics, _row_height
+
+    size, pad = _list_metrics(count, 40, INGREDIENT_BUDGET_PX)
+    assert count * _row_height(size, pad) <= INGREDIENT_BUDGET_PX, \
+        f"{count} ingredients overflow the panel at {size}px"
+    assert size >= 22, "type must stay readable"
+
+
+@pytest.mark.parametrize("count", range(1, 11))
+def test_a_step_list_always_fits_its_panel(count: int) -> None:
+    from src.render.slides import STEP_BUDGET_PX, _list_metrics, _row_height
+
+    size, pad = _list_metrics(count, 40, STEP_BUDGET_PX)
+    assert count * _row_height(size, pad) <= STEP_BUDGET_PX
+
+
+def test_a_wrapping_line_is_budgeted_as_two_rows() -> None:
+    """One long ingredient wraps and costs the budget twice, so it must count."""
+    from src.render.slides import INGREDIENT_BUDGET_PX, _list_metrics
+
+    short, _ = _list_metrics(8, 40, INGREDIENT_BUDGET_PX)
+    long, _ = _list_metrics(8, 120, INGREDIENT_BUDGET_PX)
+    assert long < short, "a wrapping line has to buy smaller type"
+
+
+def test_slide2_crops_its_photo_strip_onto_the_dish() -> None:
+    """The strip shows a third of a 3:4 source; centring it missed the food.
+
+    brand.yaml puts the dish in the upper two thirds, so a centred window took
+    the plate's lower edge and bare table underneath.
+    """
+    from src.render.slides import TEMPLATE_DIR
+
+    css = (TEMPLATE_DIR / "slide2.html").read_text()
+    assert "object-position: center 29%" in css, \
+        "the strip must be pulled up onto the dish, not centred"
