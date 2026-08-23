@@ -297,5 +297,22 @@
     ],
     "published": {},
     "held": false
+  },
+  {
+    "date": "2026-08-23",
+    "slug": "no-cook-greek-shrimp-salad",
+    "title": "No-Cook Greek Shrimp Salad",
+    "method": "no_cook",
+    "protein": "shrimp",
+    "cuisine": "mediterranean",
+    "hashtags": [
+      "#recipe",
+      "#weeknightdinner",
+      "#easydinner",
+      "#20minutemeals",
+      "#highproteindinner"
+    ],
+    "published": {},
+    "held": false
   }
 ]
