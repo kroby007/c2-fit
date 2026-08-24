@@ -314,5 +314,22 @@
     ],
     "published": {},
     "held": false
+  },
+  {
+    "date": "2026-08-24",
+    "slug": "one-pot-chinese-chicken-noodle-soup",
+    "title": "One-Pot Chinese Chicken Noodle Soup",
+    "method": "one_pot",
+    "protein": "chicken",
+    "cuisine": "chinese",
+    "hashtags": [
+      "#recipe",
+      "#healthyrecipes",
+      "#highprotein",
+      "#budgetcooking",
+      "#weeklymealplan"
+    ],
+    "published": {},
+    "held": false
   }
 ]
