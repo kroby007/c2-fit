@@ -331,5 +331,22 @@
     ],
     "published": {},
     "held": false
+  },
+  {
+    "date": "2026-08-25",
+    "slug": "sheet-pan-diner-pork-potato-fries",
+    "title": "Sheet-Pan Diner Pork & Potato Fries",
+    "method": "sheet_pan",
+    "protein": "pork",
+    "cuisine": "american_diner",
+    "hashtags": [
+      "#cooking",
+      "#quickmeals",
+      "#dinnerideas",
+      "#cheapeats",
+      "#cheapproteinmeals"
+    ],
+    "published": {},
+    "held": false
   }
 ]
