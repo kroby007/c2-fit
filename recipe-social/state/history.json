@@ -348,5 +348,22 @@
     ],
     "published": {},
     "held": false
+  },
+  {
+    "date": "2026-08-26",
+    "slug": "skillet-beef-keema",
+    "title": "Skillet Beef Keema",
+    "method": "skillet",
+    "protein": "ground_beef",
+    "cuisine": "indian",
+    "hashtags": [
+      "#food",
+      "#budgetmeals",
+      "#highprotein",
+      "#fitnessfood",
+      "#studentmeals"
+    ],
+    "published": {},
+    "held": false
   }
 ]
