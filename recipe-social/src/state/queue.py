@@ -27,6 +27,11 @@ METHOD_WINDOW = 2
 # choose from, while guaranteeing a protein cannot come back inside a week.
 PROTEIN_WINDOW = 6
 CUISINE_WINDOW = 6
+# The look of the slide, not the food. Six themes and eight surfaces, so ruling
+# out the last three of each still leaves a real choice while guaranteeing
+# neither repeats inside half a week.
+THEME_WINDOW = 3
+SURFACE_WINDOW = 3
 
 
 def _load() -> list[dict[str, Any]]:
@@ -66,6 +71,16 @@ def recent_cuisines(limit: int = CUISINE_WINDOW) -> list[str]:
     return [c for e in _load()[-limit:] if (c := e.get("cuisine"))]
 
 
+def recent_themes(limit: int = THEME_WINDOW) -> list[str]:
+    """Slide colour themes used most recently, for the next post to avoid."""
+    return [t for e in _load()[-limit:] if (t := e.get("theme"))]
+
+
+def recent_surfaces(limit: int = SURFACE_WINDOW) -> list[str]:
+    """Photo surfaces used most recently, for the next post to avoid."""
+    return [s for e in _load()[-limit:] if (s := e.get("surface"))]
+
+
 def all_slugs() -> set[str]:
     """Every slug ever posted.
 
@@ -86,6 +101,8 @@ def record(
     method: str = "",
     protein: str = "",
     cuisine: str = "",
+    theme: str = "",
+    surface: str = "",
 ) -> None:
     """Record this post, replacing any earlier entry for the same date and slug.
 
@@ -106,6 +123,8 @@ def record(
             "method": method,
             "protein": protein,
             "cuisine": cuisine,
+            "theme": theme,
+            "surface": surface,
             "hashtags": hashtags,
             "published": published or {},
             "held": held,

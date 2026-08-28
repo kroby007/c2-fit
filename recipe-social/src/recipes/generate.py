@@ -53,6 +53,26 @@ def available_cuisines(exclude: list[str] | None = None) -> list[str]:
     return _rotate("cuisines", exclude)
 
 
+def _rotate_brand(key: str, exclude: list[str] | None = None) -> list[str]:
+    """Same rotation, over a list in brand.yaml rather than niche.yaml."""
+    values = list(config.brand()[key]) if key in config.brand() else []
+    remaining = [v for v in values if v not in set(exclude or ())]
+    return remaining if len(remaining) >= 2 else values
+
+
+def available_themes(exclude: list[str] | None = None) -> list[str]:
+    """Slide colour themes the next post may use."""
+    return _rotate_brand("themes", exclude)
+
+
+def available_surfaces(exclude: list[str] | None = None) -> list[str]:
+    """Photo surfaces the next post may use."""
+    photo = config.brand()["photography"]
+    values = list(photo.get("surfaces", []))
+    remaining = [v for v in values if v not in set(exclude or ())]
+    return remaining if len(remaining) >= 2 else values
+
+
 def _schema(
     exclude_methods: list[str] | None = None,
     exclude_proteins: list[str] | None = None,

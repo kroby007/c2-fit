@@ -457,6 +457,41 @@ pushed past the bottom edge of the slide and cut in half. Slide 2 and slide 3
 carry separate budgets, because slide 3's panel is full height and has room for
 much larger type.
 
+## Making the posts look different from each other
+
+Three things rotate per post, recorded in `state/history.json` alongside the
+recipe axes and withheld for the next few days:
+
+| Rotates | Where it lives | Window |
+|---|---|---|
+| **Theme** — accent plus a tinted near-black background | `brand.yaml` → `themes` | last 3 |
+| **Surface** — the table the dish is shot on | `brand.yaml` → `photography.surfaces` | last 3 |
+| **Plate** — the vessel it is served in | `brand.yaml` → `photography.plates` | random |
+
+The accent used to be the recipe's first earned series colour. That sounds
+varied and is not: `high_protein` is first in the config and nearly every recipe
+earns it, so every slide came out the same orange-red. It is now a named theme.
+
+Two constraints on any theme you add, both enforced by `tests/test_themes.py`:
+
+- **Backgrounds stay near-black.** The food is the colour on the slide, a bright
+  panel fights it, and slide 2's photo fade assumes it is fading into something
+  dark.
+- **The accent must carry text.** It sets the hook, the ingredient quantities,
+  the eyebrow headings and the step numbers, so it is checked for real contrast
+  against its own background — vibrant, never pastel.
+
+**Series badge colours deliberately do not rotate.** HIGH PROTEIN is always the
+same red and AIR FRYER always the same amber, because that is how a returning
+viewer recognises the format at a glance.
+
+Surfaces stay dark and matte for the same reason the background does: the title
+sits over the lower third of that photo. Vary the material and its colour, not
+its brightness.
+
+The look is chosen once at generate time and written into `post.json`, so a
+re-run or a `resume` keeps the palette the photo was actually shot for.
+
 ## The quality gate
 
 Runs before anything publishes. It **corrects** what it can and **holds** what it

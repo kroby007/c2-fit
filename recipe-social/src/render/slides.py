@@ -107,18 +107,30 @@ def _list_metrics(count: int, longest: int, budget: int) -> tuple[int, int]:
     return MIN_LIST_SIZE, 6
 
 
-def _accent_for(recipe: Recipe) -> str:
-    """The recipe's first earned series color, used as the slide accent."""
-    series = config.brand()["series"]
-    for key in recipe.series:
-        if key in series:
-            return series[key]["color"]
-    return series[next(iter(series))]["color"]
+def palette_for(theme: str = "") -> dict:
+    """The colour set for one post.
+
+    Named themes rotate per post. The accent used to be the recipe's first
+    earned series colour, which sounded varied and was not: high_protein is
+    first in the config and almost every recipe earns it, so every slide came
+    out the same orange-red.
+
+    An unknown or empty name falls back to the base palette, so a post saved
+    before themes existed still renders.
+    """
+    base = dict(config.brand()["palette"])
+    themes = config.brand().get("themes") or {}
+    base.setdefault("accent", next(iter(themes.values()))["accent"] if themes else "#FF5A36")
+    if theme in themes:
+        base.update(themes[theme])
+    return base
 
 
-def _base_css(recipe: Recipe, title_size: int, list_size: int, list_pad: int) -> str:
+def _base_css(
+    recipe: Recipe, title_size: int, list_size: int, list_pad: int, theme: str = ""
+) -> str:
     brand = config.brand()
-    palette = brand["palette"]
+    palette = palette_for(theme)
     canvas = brand["canvas"]
     css = (TEMPLATE_DIR / "base.css").read_text()
     values = {
@@ -128,7 +140,7 @@ def _base_css(recipe: Recipe, title_size: int, list_size: int, list_pad: int) ->
         "TEXT": palette["text"],
         "TEXT_MUTED": palette["text_muted"],
         "HAIRLINE": palette["hairline"],
-        "ACCENT": _accent_for(recipe),
+        "ACCENT": palette["accent"],
         "WIDTH": str(canvas["width"]),
         "HEIGHT": str(canvas["height"]),
         "TITLE_SIZE": str(title_size),
@@ -162,7 +174,9 @@ def _macros_html(recipe: Recipe) -> str:
     return "".join(out)
 
 
-def render_slides(recipe: Recipe, hero_image: bytes, out_dir: pathlib.Path) -> list[pathlib.Path]:
+def render_slides(
+    recipe: Recipe, hero_image: bytes, out_dir: pathlib.Path, theme: str = ""
+) -> list[pathlib.Path]:
     """Render the three carousel slides. Returns PNG paths in carousel order."""
     brand = config.brand()
     account = brand["account"]
@@ -192,7 +206,7 @@ def render_slides(recipe: Recipe, hero_image: bytes, out_dir: pathlib.Path) -> l
         (
             "slide1.html",
             {
-                "BASE_CSS": _base_css(recipe, title_size, ing_size, ing_pad),
+                "BASE_CSS": _base_css(recipe, title_size, ing_size, ing_pad, theme),
                 "HERO": hero_uri,
                 "HANDLE": html.escape(account["handle"]),
                 "BADGES": _badges_html(recipe),
@@ -203,7 +217,7 @@ def render_slides(recipe: Recipe, hero_image: bytes, out_dir: pathlib.Path) -> l
         (
             "slide2.html",
             {
-                "BASE_CSS": _base_css(recipe, title_size, ing_size, ing_pad),
+                "BASE_CSS": _base_css(recipe, title_size, ing_size, ing_pad, theme),
                 "HERO": hero_uri,
                 "HANDLE": html.escape(account["handle"]),
                 "SLIDE_MARKER": "2 / 3",
@@ -217,7 +231,7 @@ def render_slides(recipe: Recipe, hero_image: bytes, out_dir: pathlib.Path) -> l
         (
             "slide3.html",
             {
-                "BASE_CSS": _base_css(recipe, title_size, step_size, step_pad),
+                "BASE_CSS": _base_css(recipe, title_size, step_size, step_pad, theme),
                 "HANDLE": html.escape(account["handle"]),
                 "SLIDE_MARKER": "3 / 3",
                 "TITLE": html.escape(recipe.title),

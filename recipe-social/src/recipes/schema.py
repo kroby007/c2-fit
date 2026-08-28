@@ -107,6 +107,11 @@ class Post:
     # Public HTTPS URLs after staging — what TikTok and Meta actually fetch.
     slide_urls: list[str] = field(default_factory=list)
     hero_image_path: str = ""
+    # The look, chosen once at generate time and persisted so render and stage
+    # agree — and so a resumed post keeps the palette its photo was shot for.
+    theme: str = ""
+    surface: str = ""
+    plate: str = ""
     held: bool = False
     hold_reasons: list[str] = field(default_factory=list)
     # Platform -> result detail, filled in by the publishers.

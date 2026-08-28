@@ -222,7 +222,7 @@ def test_a_rejected_photo_is_redrawn_rather_than_held(
 
     monkeypatch.setattr("src.images.provider.get_provider", lambda name=None: _Provider())
     monkeypatch.setattr("src.render.slides.render_slides",
-                        lambda r, h, d: [d / "slide1.png"])
+                        lambda r, h, d, theme="": [d / "slide1.png"])
     monkeypatch.setattr("src.render.slides.png_dimensions", lambda p: (1080, 1350))
 
     verdicts = iter([
@@ -260,7 +260,7 @@ def test_a_photo_rejected_every_time_still_reaches_the_gate(
 
     monkeypatch.setattr("src.images.provider.get_provider", lambda name=None: _Provider())
     monkeypatch.setattr("src.render.slides.render_slides",
-                        lambda r, h, d: [d / "slide1.png"])
+                        lambda r, h, d, theme="": [d / "slide1.png"])
     monkeypatch.setattr("src.render.slides.png_dimensions", lambda p: (1080, 1350))
     monkeypatch.setattr("src.images.verify.check_hero",
                         lambda r, b: ["Hero image does not show food."])

@@ -15,12 +15,76 @@ canvas:
   height: 1350
 
 palette:
+  # The fallback, and the shape every theme below fills in. Themes rotate per
+  # post; this is what renders if `themes` is ever emptied.
   bg: "#14110F"          # warm near-black — food photography pops against it
   surface: "#1E1A17"
   surface_alt: "#282320"
   text: "#F5EFE6"        # warm cream, easier on the eye than pure white
   text_muted: "#A89C8E"
   hairline: "#3A332E"
+
+# One is chosen per post and rotated against recent ones, so a week of slides is
+# not a week of the same orange. The accent carries the hook, the ingredient
+# quantities, the eyebrow headings and the step numbers.
+#
+# Every accent is high-chroma and light enough to read on its own near-black
+# background — that is the whole constraint, and it is why none of these are
+# muted or pastel. Backgrounds stay near-black and only shift hue: the food is
+# the colour on the slide, and a bright background would fight it.
+#
+# Series badge colours are deliberately NOT themed. HIGH PROTEIN is always the
+# same red and AIR FRYER always the same amber, because those are how a returning
+# viewer recognises the format at a glance.
+themes:
+  ember:                 # the original — warm orange-red on warm black
+    accent: "#FF5A36"
+    bg: "#14110F"
+    surface: "#1E1A17"
+    surface_alt: "#282320"
+    text: "#F5EFE6"
+    text_muted: "#A89C8E"
+    hairline: "#3A332E"
+  lime:
+    accent: "#9BE528"
+    bg: "#0F1310"
+    surface: "#171C18"
+    surface_alt: "#212821"
+    text: "#EFF5E9"
+    text_muted: "#9AA894"
+    hairline: "#2F3830"
+  azure:
+    accent: "#2BC8FF"
+    bg: "#0D1116"
+    surface: "#141A21"
+    surface_alt: "#1D252E"
+    text: "#E9F1F7"
+    text_muted: "#93A3B2"
+    hairline: "#2B3641"
+  magenta:
+    accent: "#FF3D8B"
+    bg: "#150E13"
+    surface: "#1E151B"
+    surface_alt: "#281D25"
+    text: "#F7EAF1"
+    text_muted: "#AE94A2"
+    hairline: "#3B2C35"
+  gold:
+    accent: "#FFC93D"
+    bg: "#14110B"
+    surface: "#1D1912"
+    surface_alt: "#27221A"
+    text: "#F7F1E3"
+    text_muted: "#AC9F86"
+    hairline: "#393226"
+  jade:
+    accent: "#1FD98F"
+    bg: "#0C1311"
+    surface: "#131C19"
+    surface_alt: "#1C2622"
+    text: "#E7F4EF"
+    text_muted: "#8FA79E"
+    hairline: "#283732"
 
 fonts:
   # Committed under assets/fonts/ so local renders and CI renders are identical.
@@ -64,10 +128,33 @@ photography:
   # Gemini supports 1:1, 2:3, 3:2, 3:4, 4:3, 9:16, 16:9, 21:9 — not 4:5. We
   # generate 3:4 and let the slide CSS cover-crop it to the 4:5 canvas.
   aspect_ratio: "3:4"
+  # One is chosen per post and rotated against recent ones — the surface used to
+  # be a fixed phrase in `style` below, so every photo was shot on the same
+  # charcoal stone and the grid read as one repeated set.
+  #
+  # All of them stay dark and matte. That is not decoration: the slide text sits
+  # over the lower third of this photo, and a pale or busy surface there costs
+  # the title its contrast. Vary the material and its colour, not its brightness.
+  surfaces:
+    - "a warm charcoal stone surface"
+    - "a dark walnut wood board with visible grain"
+    - "a matte slate surface in cool blue-grey"
+    - "a weathered dark terracotta tile"
+    - "a blackened cast-iron surface with subtle mottling"
+    - "a deep olive-green ceramic surface"
+    - "a dark oxidised copper surface with muted patina"
+    - "brushed dark steel with a faint horizontal grain"
+  # Rotated the same way, so the plate is not identical every day either.
+  plates:
+    - "a dark matte ceramic plate"
+    - "a wide shallow stoneware bowl in charcoal"
+    - "a rustic speckled ceramic plate in deep grey"
+    - "a black cast-iron skillet used as the serving vessel"
+    - "a dark slate-glazed pasta bowl"
   style: >
-    Appetizing food photography, shot slightly above at a 45-degree angle on a
-    dark matte ceramic plate over a warm charcoal stone surface. Single soft
-    directional light from the upper left with gentle falloff and soft shadows.
+    Appetizing food photography, shot slightly above at a 45-degree angle.
+    Single soft directional light from the upper left with gentle falloff and
+    soft shadows.
     Shallow depth of field, rich saturated colour, visible texture and steam
     where natural. Styled but not fussy — food a real person cooked, plated well.
 

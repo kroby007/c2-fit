@@ -10,7 +10,9 @@ from .. import config
 from ..recipes.schema import Recipe
 
 
-def hero_prompt(recipe: Recipe, problem: str = "") -> str:
+def hero_prompt(
+    recipe: Recipe, problem: str = "", surface: str = "", plate: str = ""
+) -> str:
     """The photography brief for this dish.
 
     `problem` carries what the vision check disliked about the previous attempt.
@@ -19,7 +21,16 @@ def hero_prompt(recipe: Recipe, problem: str = "") -> str:
     """
     photo = config.brand()["photography"]
     subject = recipe.image_subject.strip() or recipe.title
-    parts = [photo["style"], f"The dish: {subject}", photo["negative"]]
+    # Falls back to the first of each so a post saved before these existed, or a
+    # direct call, still renders rather than describing no surface at all.
+    surface = surface or photo["surfaces"][0]
+    plate = plate or photo["plates"][0]
+    parts = [
+        photo["style"],
+        f"Served on {plate}, set on {surface}.",
+        f"The dish: {subject}",
+        photo["negative"],
+    ]
     if problem:
         parts.append(
             f"A previous attempt was rejected: {problem} Fix that specifically. "

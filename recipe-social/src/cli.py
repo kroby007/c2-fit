@@ -123,6 +123,19 @@ def cmd_generate(args: argparse.Namespace) -> None:
     post.hashtags = compose.build_hashtags(recipe, recent=queue.recent_hashtags())
     post.caption = compose.build_caption(recipe)
 
+    # Chosen here rather than at render time, and written to post.json, so the
+    # palette and the surface survive a re-run: the photo is shot for a
+    # particular table, and re-rolling the look afterwards would pair it with a
+    # different one.
+    import random as _random
+
+    from .recipes.generate import available_surfaces, available_themes
+
+    rng = _random.Random(recipe.slug)
+    post.theme = rng.choice(available_themes(queue.recent_themes()))
+    post.surface = rng.choice(available_surfaces(queue.recent_surfaces()))
+    post.plate = rng.choice(config.brand()["photography"]["plates"])
+
     # A hero image belongs to the recipe it was generated for. Writing a new
     # recipe into this directory makes any photo already sitting there a photo of
     # a different dish, so it goes now — otherwise the reuse in cmd_render would
@@ -130,6 +143,7 @@ def cmd_generate(args: argparse.Namespace) -> None:
     _hero_path(date).unlink(missing_ok=True)
     post.save(_post_path(date))
     print(f"Generated: {recipe.title}")
+    print(f"  look: {post.theme} on {post.surface}")
     print(f"  {recipe.macros.protein_g}g protein · {recipe.total_minutes} min · "
           f"${recipe.cost_per_serving:.2f}/serving · badges: {', '.join(recipe.series) or 'none'}")
     print(f"  -> {_post_path(date)}")
@@ -195,6 +209,9 @@ def cmd_resume(args: argparse.Namespace) -> None:
 
     old = Post.load(_post_path(source))
     post = Post(recipe=old.recipe, date=date)
+    # The salvaged photo was shot on a particular surface under a particular
+    # palette; both come across with it or the slides stop matching the image.
+    post.theme, post.surface, post.plate = old.theme, old.surface, old.plate
     post.hashtags = compose.build_hashtags(post.recipe, recent=queue.recent_hashtags())
     post.caption = compose.build_caption(post.recipe)
 
@@ -246,7 +263,8 @@ def cmd_render(args: argparse.Namespace) -> None:
             provider = get_provider()
             print(f"Generating hero image via {type(provider).__name__}...")
             hero = provider.generate(
-                prompts.hero_prompt(post.recipe, problem), prompts.aspect_ratio()
+                prompts.hero_prompt(post.recipe, problem, post.surface, post.plate),
+                prompts.aspect_ratio(),
             )
             hero_path.write_bytes(hero)
 
@@ -275,7 +293,7 @@ def cmd_render(args: argparse.Namespace) -> None:
 
     post.hero_image_path = str(hero_path)
 
-    paths = render_slides(post.recipe, hero, out_dir)
+    paths = render_slides(post.recipe, hero, out_dir, post.theme)
     post.slide_paths = [str(p) for p in paths]
     post.save(_post_path(date))
 
@@ -320,7 +338,7 @@ def cmd_stage(args: argparse.Namespace) -> None:
     queue.record(
         date, post.recipe.slug, post.recipe.title, post.hashtags,
         method=post.recipe.method, protein=post.recipe.protein,
-        cuisine=post.recipe.cuisine,
+        cuisine=post.recipe.cuisine, theme=post.theme, surface=post.surface,
     )
     print(f"  Recorded in {queue.path().name}: {post.recipe.title}")
 
