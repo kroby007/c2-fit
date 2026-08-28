@@ -365,5 +365,22 @@
     ],
     "published": {},
     "held": false
+  },
+  {
+    "date": "2026-08-28",
+    "slug": "middle-eastern-lentil-egg-stew",
+    "title": "Middle Eastern Lentil & Egg Stew",
+    "method": "one_pot",
+    "protein": "beans_or_lentils",
+    "cuisine": "middle_eastern",
+    "hashtags": [
+      "#cooking",
+      "#mealprep",
+      "#easydinner",
+      "#groceryhaul",
+      "#proteindinner"
+    ],
+    "published": {},
+    "held": false
   }
 ]
