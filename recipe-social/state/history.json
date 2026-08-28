@@ -382,5 +382,24 @@
     ],
     "published": {},
     "held": false
+  },
+  {
+    "date": "2026-08-28",
+    "slug": "no-cook-thai-tuna-lettuce-cups",
+    "title": "No-Cook Thai Tuna Lettuce Cups",
+    "method": "no_cook",
+    "protein": "canned_tuna",
+    "cuisine": "thai",
+    "theme": "jade",
+    "surface": "a warm charcoal stone surface",
+    "hashtags": [
+      "#easyrecipes",
+      "#proteinrecipes",
+      "#cookingtiktok",
+      "#proteinpacked",
+      "#realfoodfast"
+    ],
+    "published": {},
+    "held": false
   }
 ]
