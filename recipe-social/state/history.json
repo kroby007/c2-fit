@@ -401,5 +401,24 @@
     ],
     "published": {},
     "held": false
+  },
+  {
+    "date": "2026-08-29",
+    "slug": "air-fryer-miso-white-fish-bowl",
+    "title": "Air Fryer Miso White Fish Bowl",
+    "method": "air_fryer",
+    "protein": "white_fish",
+    "cuisine": "japanese",
+    "theme": "azure",
+    "surface": "a dark oxidised copper surface with muted patina",
+    "hashtags": [
+      "#foodtok",
+      "#weeknightdinner",
+      "#easydinner",
+      "#gymfood",
+      "#highproteindinner"
+    ],
+    "published": {},
+    "held": false
   }
 ]
