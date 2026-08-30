@@ -420,5 +420,24 @@
     ],
     "published": {},
     "held": false
+  },
+  {
+    "date": "2026-08-30",
+    "slug": "spicy-korean-tofu-kimchi-stew",
+    "title": "Spicy Korean Tofu Kimchi Stew",
+    "method": "one_pot",
+    "protein": "tofu",
+    "cuisine": "korean",
+    "theme": "lime",
+    "surface": "a weathered dark terracotta tile",
+    "hashtags": [
+      "#recipe",
+      "#healthyrecipes",
+      "#highprotein",
+      "#macrofriendly",
+      "#weeklymealplan"
+    ],
+    "published": {},
+    "held": false
   }
 ]
