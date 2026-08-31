@@ -439,5 +439,24 @@
     ],
     "published": {},
     "held": false
+  },
+  {
+    "date": "2026-08-31",
+    "slug": "mediterranean-chicken-feta-traybake",
+    "title": "Mediterranean Chicken Feta Traybake",
+    "method": "sheet_pan",
+    "protein": "chicken",
+    "cuisine": "mediterranean",
+    "theme": "ember",
+    "surface": "a dark walnut wood board with visible grain",
+    "hashtags": [
+      "#easyrecipes",
+      "#dinnerideas",
+      "#quickmeals",
+      "#bulkingmeals",
+      "#cheapproteinmeals"
+    ],
+    "published": {},
+    "held": false
   }
 ]
