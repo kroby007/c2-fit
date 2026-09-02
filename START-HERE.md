@@ -49,7 +49,7 @@ Same page, **Secrets** tab:
 | `ANTHROPIC_API_KEY` | <https://console.anthropic.com> | ~$0.04–0.06 per post |
 | `GEMINI_API_KEY` | <https://aistudio.google.com/apikey> | ~$0.04 per image |
 
-Together: roughly **$3/month** at one post a day.
+Together: roughly **$1.60/month** at four posts a week (Tue/Thu/Sat/Sun).
 
 **Gemini image generation has no free tier** — enable billing on the Google Cloud
 project behind the key, or every run fails with a quota error. Neither key is
@@ -70,7 +70,7 @@ and stops. The run's Summary page then links you to
 `https://kroby007.github.io/c2-fit/today.html` — open that on your phone and
 post from it.
 
-This needs nothing installed, and it's the same machine the daily job uses, so
+This needs nothing installed, and it's the same machine the scheduled job uses, so
 what you see is what will post.
 
 ### Or run it locally
@@ -116,7 +116,7 @@ Settings → Secrets and variables → Actions → **Variables** → New variabl
 |---|---|
 | `MANUAL_MODE` | `true` |
 
-Now the daily job does everything except the final API call: it writes the
+Now the scheduled job does everything except the final API call: it writes the
 recipe, generates the photo, renders the slides, runs the quality gate, and
 publishes them to a page on your own site.
 
@@ -128,21 +128,21 @@ Save the three images, tap **Copy caption**, and post. About a minute.
 
 Add it to your home screen — the URL never changes.
 
-The schedule is already live: `daily-post.yml` runs at **15:00 UTC** every day,
-so the page refreshes itself each morning without you doing anything. Nothing
-else to turn on.
+The schedule is already live: `daily-post.yml` runs at **15:00 UTC on Tuesday,
+Thursday, Saturday and Sunday**, so the page refreshes itself on those mornings
+without you doing anything. Nothing else to turn on.
 
 **This needs no TikTok developer app at all.** Everything below is optional, and
 only removes the file-saving step: even with full API access, drafts mode still
 means opening TikTok and picking a sound yourself. Run this way for a few weeks
-first. If the daily minute starts to grate, then do the steps below.
+first. If the minute-per-post starts to grate, then do the steps below.
 
 ---
 
 ## Optional, later: the TikTok API
 
 > Skip this entirely unless manual posting is annoying you. It takes days of
-> review to save ~60 seconds a day.
+> review to save ~60 seconds a post.
 
 ## 6. Register the TikTok app
 
@@ -221,7 +221,8 @@ order and the caption intact. Add a trending sound and post.
 
 ## 11. Turn on the schedule
 
-`.github/workflows/daily-post.yml` already runs at 15:00 UTC daily.
+`.github/workflows/daily-post.yml` already runs at 15:00 UTC on Tuesday,
+Thursday, Saturday and Sunday.
 
 Run it once manually first with **dry run** ticked — it builds everything and
 prints the exact payloads without sending anything.

@@ -1,6 +1,6 @@
 # C2 Fit
 
-Automated daily recipe carousels for TikTok — [@c2_fit_](https://www.tiktok.com/@c2_fit_).
+Automated recipe carousels for TikTok — [@c2_fit_](https://www.tiktok.com/@c2_fit_).
 
 One recipe becomes three 1080×1350 slides, a caption with emojis and rotated
 hashtags, and a post — generated, quality-checked, and published on a schedule.
@@ -20,7 +20,7 @@ generate  →  render  →  stage  →  gate  →  publish
 |---|---|
 | `recipe-social/` | The pipeline — generation, rendering, quality gate, publishers, tests |
 | `docs/` | The GitHub Pages site: privacy/terms pages TikTok requires, and the media prefix it fetches images from |
-| `.github/workflows/` | `daily-post.yml` (the scheduled run) and `preflight.yml` (setup check, posts nothing) |
+| `.github/workflows/` | `daily-post.yml` (the scheduled run — Tue/Thu/Sat/Sun) and `preflight.yml` (setup check, posts nothing) |
 
 ## Two things worth knowing up front
 

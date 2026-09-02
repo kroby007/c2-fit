@@ -6,7 +6,11 @@ account:
   name: "C2 Fit"
   handle: "@c2_fit_"
   tagline: "fast. cheap. high protein."
-  cta: "Follow for a new one every day"
+  # Deliberately not a cadence. This line goes on slide 3 and into every
+  # caption, so "every day" became a claim the account no longer met the
+  # moment the schedule dropped to four days a week — and it would go stale
+  # again on the next change.
+  cta: "Follow for more like this"
 
 # 1080x1350 is the 4:5 portrait ratio. TikTok photo posts and Instagram
 # carousels both render this at full width without cropping.

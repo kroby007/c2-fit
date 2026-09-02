@@ -1,9 +1,14 @@
-name: Daily recipe post
+name: Recipe post
 
 on:
   schedule:
-    # 15:00 UTC — late morning US Eastern, when this audience is deciding lunch.
-    - cron: "0 15 * * *"
+    # Tuesday, Thursday, Saturday and Sunday at 15:00 UTC — late morning US
+    # Eastern, when this audience is deciding lunch.
+    #
+    # Day-of-week is 0=Sunday, so 0,2,4,6 is Sun/Tue/Thu/Sat. Cron here runs on
+    # UTC, but 15:00 UTC is 10 or 11am US Eastern, still the same calendar day,
+    # so the days need no shifting. A schedule that crossed midnight UTC would.
+    - cron: "0 15 * * 0,2,4,6"
   workflow_dispatch:
     inputs:
       manual:

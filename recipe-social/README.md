@@ -1,6 +1,6 @@
 # C2 Fit — automated recipe carousels
 
-Generates a daily recipe carousel and posts it to TikTok
+Generates a recipe carousel four mornings a week and posts it to TikTok
 ([@c2_fit_](https://www.tiktok.com/@c2_fit_)). One recipe becomes three
 1080×1350 slides, a caption with emojis and five rotated hashtags, and a post.
 
@@ -60,10 +60,11 @@ repository variable:
 |---|---|
 | `MANUAL_MODE` | `true` |
 
-The scheduled job now runs end to end every day and stops before the API call,
-having published the finished post to **`<PAGES_BASE_URL>/today.html`**. Open
-that on your phone, save the three images, tap *Copy caption*, post. A minute a
-day, and nothing to install or maintain.
+The scheduled job now runs end to end on each posting day and stops before the
+API call, having published the finished post to
+**`<PAGES_BASE_URL>/today.html`**. Open that on your phone, save the three
+images, tap *Copy caption*, post. A minute on a posting morning, and nothing to
+install or maintain.
 
 Running it yourself instead of waiting for the cron:
 
@@ -128,7 +129,7 @@ Actions → Variables): `PAGES_BASE_URL` = that URL, no trailing slash.
 | `ANTHROPIC_API_KEY` | <https://console.anthropic.com> | ~$0.04–0.06 per post (recipe + photo check) |
 | `GEMINI_API_KEY` | <https://aistudio.google.com/apikey> | ~$0.04 per image |
 
-At one post a day that is roughly **$3/month** — see
+At four posts a week that is roughly **$1.60/month** — see
 [Where the money goes](#where-the-money-goes) for the breakdown and the levers
 that bring it down. Gemini image generation has **no free tier**; billing must be
 enabled on the Google Cloud project behind the key or every run fails with a 429.
@@ -193,7 +194,7 @@ URL-prefix verification click in the TikTok portal, and it says so.
 
 To run the same checks against your **Actions secrets** rather than your laptop,
 trigger the **Preflight (check setup)** workflow from the Actions tab. That's the
-environment the daily job actually runs in.
+environment the scheduled job actually runs in.
 
 ### 5. First live post
 
@@ -206,7 +207,8 @@ order and the caption intact. Add a trending sound and post.
 
 ### 6. Turn the schedule on
 
-`.github/workflows/daily-post.yml` runs at 15:00 UTC daily. Try it first with
+`.github/workflows/daily-post.yml` runs at 15:00 UTC on Tuesday, Thursday,
+Saturday and Sunday. Try it first with
 **Run workflow → dry run** ticked: it builds everything and prints the exact
 payloads without sending anything.
 
@@ -320,7 +322,8 @@ Roughly **$0.08–0.11 a post** at the defaults, split across three calls:
 | Generate the hero photo | Gemini 2.5 Flash Image | ~$0.04 |
 | Check the photo | Haiku 4.5 | ~$0.01 |
 
-About **$3/month** at one post a day. Everything downstream — rendering, staging,
+About **$1.60/month** at four posts a week — 17 posts. Everything
+downstream — rendering, staging,
 Pages hosting, Actions minutes — is free, so the whole bill is model calls.
 
 Two deliberate choices behind that. The recipe runs on **Sonnet at high effort**
@@ -332,7 +335,7 @@ share `RECIPE_MODEL` and cost about as much as writing the entire recipe.
 
 Note Sonnet 5 is on introductory pricing ($2/$10 per million tokens) through
 **2026-08-31**, after which it returns to $3/$15 — expect the per-post figure to
-rise about 30% then, to roughly $4/month.
+rise about 30% then, to roughly $2/month.
 
 `output_config.effort` is **rejected outright by Haiku 4.5**, so the check sends
 it only to models that accept it. If you point `IMAGE_CHECK_MODEL` at another
@@ -369,7 +372,7 @@ one day and honey garlic shrimp the next.
 
 Recording happens in the **stage** step, because staging is the moment a post
 goes public — the slides land on the site and the phone page points at them.
-That matters more than it sounds: the daily workflow runs the stages one at a
+That matters more than it sounds: the scheduled workflow runs the stages one at a
 time and never calls `run`, so recording anywhere inside `run` leaves the history
 empty in production while the tests, which do call `run`, pass. It is an upsert
 on date and slug, so a re-run cannot double-count.
@@ -538,9 +541,9 @@ TikTok there's no rotation to manage.
 ## Costs
 
 See [Where the money goes](#where-the-money-goes) for the per-call breakdown —
-roughly **$3/month** at one post a day, all of it model calls.
+roughly **$1.60/month** at four posts a week, all of it model calls.
 
-TikTok's own daily posting cap is far above one post a day, so nothing here is
+TikTok's own daily posting cap is far above this rate, so nothing here is
 constrained by the platform.
 
 ---
