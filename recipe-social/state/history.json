@@ -477,5 +477,24 @@
     ],
     "published": {},
     "held": false
+  },
+  {
+    "date": "2026-09-03",
+    "slug": "one-pot-cajun-beef-rice",
+    "title": "One-Pot Cajun Beef & Rice",
+    "method": "one_pot",
+    "protein": "ground_beef",
+    "cuisine": "cajun",
+    "theme": "gold",
+    "surface": "brushed dark steel with a faint horizontal grain",
+    "hashtags": [
+      "#cooking",
+      "#mealprep",
+      "#dinnerideas",
+      "#cheapeats",
+      "#dinnerin20"
+    ],
+    "published": {},
+    "held": false
   }
 ]
