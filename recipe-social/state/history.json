@@ -496,5 +496,24 @@
     ],
     "published": {},
     "held": false
+  },
+  {
+    "date": "2026-09-05",
+    "slug": "sheet-pan-tandoori-turkey-meatballs",
+    "title": "Sheet-Pan Tandoori Turkey Meatballs",
+    "method": "sheet_pan",
+    "protein": "ground_turkey",
+    "cuisine": "indian",
+    "theme": "azure",
+    "surface": "a dark oxidised copper surface with muted patina",
+    "hashtags": [
+      "#easyrecipes",
+      "#proteinrecipes",
+      "#cookingtiktok",
+      "#cheapmeals",
+      "#studentmeals"
+    ],
+    "published": {},
+    "held": false
   }
 ]
