@@ -515,5 +515,24 @@
     ],
     "published": {},
     "held": false
+  },
+  {
+    "date": "2026-09-06",
+    "slug": "no-cook-mexican-tuna-tostadas",
+    "title": "No-Cook Mexican Tuna Tostadas",
+    "method": "no_cook",
+    "protein": "canned_tuna",
+    "cuisine": "mexican",
+    "theme": "lime",
+    "surface": "a matte slate surface in cool blue-grey",
+    "hashtags": [
+      "#foodtok",
+      "#weeknightdinner",
+      "#easydinner",
+      "#lazymeals",
+      "#proteindinner"
+    ],
+    "published": {},
+    "held": false
   }
 ]
