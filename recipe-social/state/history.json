@@ -534,5 +534,24 @@
     ],
     "published": {},
     "held": false
+  },
+  {
+    "date": "2026-09-08",
+    "slug": "miso-ginger-salmon-skillet",
+    "title": "Miso Ginger Salmon Skillet",
+    "method": "skillet",
+    "protein": "salmon",
+    "cuisine": "japanese",
+    "theme": "magenta",
+    "surface": "a warm charcoal stone surface",
+    "hashtags": [
+      "#recipe",
+      "#healthyrecipes",
+      "#proteinrecipes",
+      "#gymfood",
+      "#highproteindinner"
+    ],
+    "published": {},
+    "held": false
   }
 ]
