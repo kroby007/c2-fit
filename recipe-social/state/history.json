@@ -553,5 +553,24 @@
     ],
     "published": {},
     "held": false
+  },
+  {
+    "date": "2026-09-10",
+    "slug": "diner-sheet-pan-protein-egg-bake",
+    "title": "Diner Sheet-Pan Protein Egg Bake",
+    "method": "sheet_pan",
+    "protein": "eggs",
+    "cuisine": "american_diner",
+    "theme": "jade",
+    "surface": "a dark walnut wood board with visible grain",
+    "hashtags": [
+      "#recipe",
+      "#quickmeals",
+      "#weeknightdinner",
+      "#proteinpacked",
+      "#weeklymealplan"
+    ],
+    "published": {},
+    "held": false
   }
 ]
