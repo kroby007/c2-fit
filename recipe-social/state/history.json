@@ -572,5 +572,24 @@
     ],
     "published": {},
     "held": false
+  },
+  {
+    "date": "2026-09-12",
+    "slug": "one-pot-thai-coconut-fish-stew",
+    "title": "One-Pot Thai Coconut Fish Stew",
+    "method": "one_pot",
+    "protein": "white_fish",
+    "cuisine": "thai",
+    "theme": "ember",
+    "surface": "a blackened cast-iron surface with subtle mottling",
+    "hashtags": [
+      "#food",
+      "#budgetmeals",
+      "#highprotein",
+      "#20minutemeals",
+      "#nofussdinner"
+    ],
+    "published": {},
+    "held": false
   }
 ]
