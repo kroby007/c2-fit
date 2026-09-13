@@ -591,5 +591,24 @@
     ],
     "published": {},
     "held": false
+  },
+  {
+    "date": "2026-09-13",
+    "slug": "chinese-ginger-chicken-stir-fry",
+    "title": "Chinese Ginger Chicken Stir-Fry",
+    "method": "skillet",
+    "protein": "chicken",
+    "cuisine": "chinese",
+    "theme": "lime",
+    "surface": "a weathered dark terracotta tile",
+    "hashtags": [
+      "#cooking",
+      "#mealprep",
+      "#dinnerideas",
+      "#bulkingmeals",
+      "#macrotracking"
+    ],
+    "published": {},
+    "held": false
   }
 ]
