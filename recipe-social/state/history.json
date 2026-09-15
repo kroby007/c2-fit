@@ -610,5 +610,24 @@
     ],
     "published": {},
     "held": false
+  },
+  {
+    "date": "2026-09-15",
+    "slug": "sheet-pan-beef-kofta-peppers",
+    "title": "Sheet-Pan Beef Kofta & Peppers",
+    "method": "sheet_pan",
+    "protein": "ground_beef",
+    "cuisine": "middle_eastern",
+    "theme": "gold",
+    "surface": "a dark oxidised copper surface with muted patina",
+    "hashtags": [
+      "#easyrecipes",
+      "#cookingtiktok",
+      "#highprotein",
+      "#groceryhaul",
+      "#cheapproteinmeals"
+    ],
+    "published": {},
+    "held": false
   }
 ]
