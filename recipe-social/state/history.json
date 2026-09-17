@@ -629,5 +629,24 @@
     ],
     "published": {},
     "held": false
+  },
+  {
+    "date": "2026-09-17",
+    "slug": "one-pot-pork-keema-curry",
+    "title": "One-Pot Pork Keema Curry",
+    "method": "one_pot",
+    "protein": "pork",
+    "cuisine": "indian",
+    "theme": "magenta",
+    "surface": "brushed dark steel with a faint horizontal grain",
+    "hashtags": [
+      "#foodtok",
+      "#easydinner",
+      "#proteinrecipes",
+      "#eatingonabudget",
+      "#simplemeals"
+    ],
+    "published": {},
+    "held": false
   }
 ]
