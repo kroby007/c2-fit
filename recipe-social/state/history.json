@@ -648,5 +648,24 @@
     ],
     "published": {},
     "held": false
+  },
+  {
+    "date": "2026-09-19",
+    "slug": "sizzling-shrimp-fajita-skillet",
+    "title": "Sizzling Shrimp Fajita Skillet",
+    "method": "skillet",
+    "protein": "shrimp",
+    "cuisine": "mexican",
+    "theme": "jade",
+    "surface": "a dark walnut wood board with visible grain",
+    "hashtags": [
+      "#food",
+      "#healthyrecipes",
+      "#proteinrecipes",
+      "#gymfood",
+      "#highproteindinner"
+    ],
+    "published": {},
+    "held": false
   }
 ]
