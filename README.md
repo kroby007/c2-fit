@@ -1,5 +1,18 @@
 # C2 Fit
 
+> ## ⏸ Paused
+>
+> The schedule is switched off — nothing posts on its own, and nothing is being
+> generated, so it is costing nothing. Everything else is untouched: the code,
+> the history, the published site and every past post are exactly as they were.
+>
+> **To start again:** uncomment the `schedule:` block at the top of
+> `.github/workflows/daily-post.yml`. That is
+> the only change needed.
+>
+> **For a one-off post meanwhile:** Actions → *Recipe post* → **Run workflow**.
+> That still works while paused.
+
 Automated recipe carousels for TikTok — [@c2_fit_](https://www.tiktok.com/@c2_fit_).
 
 One recipe becomes three 1080×1350 slides, a caption with emojis and rotated

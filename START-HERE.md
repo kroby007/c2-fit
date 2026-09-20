@@ -1,5 +1,18 @@
 # C2 Fit — setup checklist
 
+> ## ⏸ Paused
+>
+> The schedule is switched off — nothing posts on its own, and nothing is being
+> generated, so it is costing nothing. Everything else is untouched: the code,
+> the history, the published site and every past post are exactly as they were.
+>
+> **To start again:** uncomment the `schedule:` block at the top of
+> [`.github/workflows/daily-post.yml`](.github/workflows/daily-post.yml). That is
+> the only change needed.
+>
+> **For a one-off post meanwhile:** Actions → *Recipe post* → **Run workflow**.
+> That still works while paused.
+
 Everything is built and tested. These are the steps only you can do.
 
 Full detail for any step is in [`recipe-social/README.md`](recipe-social/README.md).
