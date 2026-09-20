@@ -667,5 +667,24 @@
     ],
     "published": {},
     "held": false
+  },
+  {
+    "date": "2026-09-20",
+    "slug": "sheet-pan-tuscan-tofu-tomatoes",
+    "title": "Sheet-Pan Tuscan Tofu & Tomatoes",
+    "method": "sheet_pan",
+    "protein": "tofu",
+    "cuisine": "italian",
+    "theme": "azure",
+    "surface": "a deep olive-green ceramic surface",
+    "hashtags": [
+      "#recipe",
+      "#weeknightdinner",
+      "#quickmeals",
+      "#budgetcooking",
+      "#weeklymealplan"
+    ],
+    "published": {},
+    "held": false
   }
 ]
